@@ -20,10 +20,10 @@
 - [x] 복합키 ID 클래스 구현
 
 ### Phase 2: 카테고리 매핑 시스템 ✅
-- [ ] CategoryMappingService 구현
-- [ ] all_apps.csv 파일 로드 (14,445개 앱)
-- [ ] package_name → category_id 매핑 (O(1) 조회)
-- [ ] 5개 카테고리 분류: GAME, SOCIAL_COMM, LEARNING, ENTERTAINMENT, OTHER
+- [x] CategoryMappingService 구현
+- [x] all_apps.csv 파일 로드 (14,445개 앱)
+- [x] package_name → category_id 매핑 (O(1) 조회)
+- [x] 5개 카테고리 분류: GAME, SOCIAL_COMM, LEARNING, ENTERTAINMENT, OTHER
 
 ### Phase 3: 기본 앱 사용시간 계산 ✅
 - [ ] AppUsageTracker 서비스 구현

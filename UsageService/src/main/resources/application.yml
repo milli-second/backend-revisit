@@ -6,10 +6,10 @@ spring:
     name: usageservice
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/postgres
+    url: jdbc:postgresql://localhost:5433/usageservice
     driver-class-name: org.postgresql.Driver
     username: postgres
-    password: your_password
+    password: postgres
 
   jpa:
     hibernate:
@@ -30,6 +30,11 @@ spring:
       kafka:
         binder:
           brokers: localhost:9092
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
 
 logging:
   level:

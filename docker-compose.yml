@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  userservice-db:
+    image: postgres:16
+    container_name: userservice-db
+    environment:
+      POSTGRES_DB: userservice
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - userservice_data:/var/lib/postgresql/data
+      - ./init-scripts/userservice:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  usageservice-db:
+    image: timescale/timescaledb:latest-pg16
+    container_name: usageservice-db
+    environment:
+      POSTGRES_DB: usageservice
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - usageservice_data:/var/lib/postgresql/data
+      - ./init-scripts/usageservice:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  insightservice-db:
+    image: postgres:16
+    container_name: insightservice-db
+    environment:
+      POSTGRES_DB: insightservice
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - insightservice_data:/var/lib/postgresql/data
+      - ./init-scripts/insightservice:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: usageservice-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  userservice_data:
+  usageservice_data:
+  insightservice_data:
+  redis_data:
