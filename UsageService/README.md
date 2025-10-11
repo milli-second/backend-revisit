@@ -25,7 +25,7 @@
 - [x] package_name → category_id 매핑 (O(1) 조회)
 - [x] 5개 카테고리 분류: GAME, SOCIAL_COMM, LEARNING, ENTERTAINMENT, OTHER
 
-### Phase 3: 기본 앱 사용시간 계산 ✅
+### Phase 3: 기본 앱 사용시간 계산 
 - [ ] AppUsageTracker 서비스 구현
 - [ ] MOVE_TO_FOREGROUND 이벤트 처리
 - [ ] MOVE_TO_BACKGROUND 이벤트 처리
@@ -33,7 +33,7 @@
 - [ ] 비정상 데이터 필터링 (음수, 24시간 초과)
 - [ ] SCREEN_ON 이벤트 처리 (픽업 카운트)
 
-### Phase 4: Redis 실시간 집계 ✅
+### Phase 4: Redis 실시간 집계 
 - [ ] 일일 메트릭 집계 (00:00-23:59, UTC offset 고려)
   - [ ] 총 사용시간
   - [ ] 시간대별 사용시간 (dawn/morning/afternoon/evening)
@@ -47,7 +47,7 @@
   - [ ] Top 3 앱 계산
   - [ ] 카테고리 비율 계산
 
-### Phase 5: 일일 배치 작업 ✅
+### Phase 5: 일일 배치 작업 
 - [ ] DailyMetricsBatchService 구현
 - [ ] 매일 00:00 Cron 스케줄러
 - [ ] Redis → DB 저장
@@ -58,17 +58,17 @@
 - [ ] 카테고리 비율 계산
 - [ ] 부분 실패 허용 (한 사용자 실패해도 다른 사용자는 저장)
 
-### Phase 6: 테스트 코드 ✅
+### Phase 6: 테스트 코드 
 - [ ] AppUsageTrackerTest
   - [ ] FOREGROUND/BACKGROUND 이벤트 처리
   - [ ] 비정상 사용시간 필터링
   - [ ] SCREEN_ON 이벤트
   - [ ] 자정 경계 케이스 (UTC offset)
   - [ ] 24시간 슬라이딩 윈도우
-- [ ] CategoryMappingServiceTest
-  - [ ] CSV 파일 로드
-  - [ ] 카테고리 매핑 정확도
-  - [ ] NULL 처리
+- [x] CategoryMappingServiceTest
+  - [x] CSV 파일 로드
+  - [x] 카테고리 매핑 정확도
+  - [x] NULL 처리
 - [ ] DailyMetricsBatchServiceTest
   - [ ] 배치 변환 로직
   - [ ] Top 3 앱 추출
