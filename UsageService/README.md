@@ -25,27 +25,27 @@
 - [x] package_name → category_id 매핑 (O(1) 조회)
 - [x] 5개 카테고리 분류: GAME, SOCIAL_COMM, LEARNING, ENTERTAINMENT, OTHER
 
-### Phase 3: 기본 앱 사용시간 계산 
-- [ ] AppUsageTracker 서비스 구현
-- [ ] MOVE_TO_FOREGROUND 이벤트 처리
-- [ ] MOVE_TO_BACKGROUND 이벤트 처리
-- [ ] 실제 사용시간 계산 (시작-종료)
-- [ ] 비정상 데이터 필터링 (음수, 24시간 초과)
-- [ ] SCREEN_ON 이벤트 처리 (픽업 카운트)
+### Phase 3: 기본 앱 사용시간 계산 ✅
+- [x] AppUsageTracker 서비스 구현
+- [x] MOVE_TO_FOREGROUND 이벤트 처리
+- [x] MOVE_TO_BACKGROUND 이벤트 처리
+- [x] 실제 사용시간 계산 (시작-종료)
+- [x] 비정상 데이터 필터링 (음수, 24시간 초과)
+- [x] USER_INTERACTION 이벤트 처리 (픽업 카운트)
 
 ### Phase 4: Redis 실시간 집계 
-- [ ] 일일 메트릭 집계 (00:00-23:59, UTC offset 고려)
-  - [ ] 총 사용시간
-  - [ ] 시간대별 사용시간 (dawn/morning/afternoon/evening)
-  - [ ] 새벽 SNS 사용시간
-  - [ ] 시간별 사용량 (hour_0 ~ hour_23)
-  - [ ] 카테고리별 사용시간
-  - [ ] 앱별 사용시간
-- [ ] 실시간 메트릭 (24시간 슬라이딩 윈도우)
-  - [ ] Sorted Set으로 이벤트 저장
-  - [ ] 24시간 이전 데이터 자동 삭제
-  - [ ] Top 3 앱 계산
-  - [ ] 카테고리 비율 계산
+- [x] 일일 메트릭 집계 (00:00-23:59, UTC offset 고려)
+  - [x] 총 사용시간
+  - [x] 시간대별 사용시간 (dawn/morning/afternoon/evening)
+  - [x] 새벽 SNS 사용시간
+  - [x] 시간별 사용량 (hour_0 ~ hour_23)
+  - [x] 카테고리별 사용시간
+  - [x] 앱별 사용시간
+- [x] 실시간 메트릭 (24시간 슬라이딩 윈도우)
+  - [x] Sorted Set으로 이벤트 저장
+  - [x] 24시간 이전 데이터 자동 삭제
+  - [x] Top 3 앱 계산
+  - [x] 카테고리 비율 계산
 
 ### Phase 5: 일일 배치 작업 
 - [ ] DailyMetricsBatchService 구현
@@ -59,12 +59,11 @@
 - [ ] 부분 실패 허용 (한 사용자 실패해도 다른 사용자는 저장)
 
 ### Phase 6: 테스트 코드 
-- [ ] AppUsageTrackerTest
-  - [ ] FOREGROUND/BACKGROUND 이벤트 처리
-  - [ ] 비정상 사용시간 필터링
-  - [ ] SCREEN_ON 이벤트
-  - [ ] 자정 경계 케이스 (UTC offset)
-  - [ ] 24시간 슬라이딩 윈도우
+- [x] AppUsageTrackerTest
+  - [x] FOREGROUND/BACKGROUND 이벤트 처리
+  - [x] 비정상 사용시간 필터링
+  - [x] 자정 경계 케이스 (UTC offset)
+  - [x] 24시간 슬라이딩 윈도우
 - [x] CategoryMappingServiceTest
   - [x] CSV 파일 로드
   - [x] 카테고리 매핑 정확도
