@@ -17,6 +17,5 @@ public class KafkaProcessor {
             System.out.println("📨 UsageService Kafka 메시지 수신: " + message);
         };
     }
-
     // StreamBridge를 사용한 수동 메시지 발송으로 대체
 }

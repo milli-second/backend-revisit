@@ -43,16 +43,11 @@ public class UserController {
 
     @PostMapping("/logout")
     public ResponseEntity<String> logout(@RequestHeader("Authorization") String token) {
-//        String nickname = body.get("nickname");
-//        userService.logout(nickname);
-//        return "User logged out: " + nickname;
-
         // Bearer 제거
         String accessToken = token.replace("Bearer ", "");
 
         // JWT에서 닉네임 추출
         String nickname = jwtUtil.getUsernameFromToken(accessToken);
-
         userService.logout(nickname);
         return ResponseEntity.ok("로그아웃 완료");
 

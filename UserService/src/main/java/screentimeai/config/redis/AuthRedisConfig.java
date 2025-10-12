@@ -6,10 +6,8 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
-
 @Configuration
 public class AuthRedisConfig {
-
     @Bean
     public LettuceConnectionFactory authRedisConnectionFactory() {
         LettuceConnectionFactory factory = new LettuceConnectionFactory("localhost", 6379);

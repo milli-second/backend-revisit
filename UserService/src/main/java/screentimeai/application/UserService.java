@@ -96,13 +96,10 @@ public class UserService {
         if (!jwtUtil.validateToken(storedToken, user.getNickname())) {
             throw new IllegalStateException("❌ 토큰이 만료되었거나 유효하지 않습니다.");
         }
-
         user.changePassword(oldPassword, newPassword, passwordEncoder);
-
         userRepository.save(user); // 👉 이벤트 발행됨
         System.out.println("✅ Password changed for user: " + nickname);
     }
-
 
     public void deactivateAccount(String nickname) {
         User user = userRepository.findByNickname(nickname)
@@ -111,8 +108,6 @@ public class UserService {
         userRepository.save(user); // 👉 이벤트 발행 트리거
         System.out.println("🗑️ Account deactivated: " + nickname);
     }
-
-
 }
 
 
