@@ -1,0 +1,56 @@
+### RawData 저장 테스트 (UUID 형식, 밀리초 timestamp)
+POST http://localhost:8083/api/raw-data
+Content-Type: application/json
+
+[
+  {
+    "subject_id": "550e8400-e29b-41d4-a716-446655440000",
+    "timestamp": 1760246989686,
+    "utcoffset": 9,
+    "source_type": "PHONE",
+    "source_info": "samsung-SM-G928S-7.0",
+    "package_name": "com.nhn.android.band",
+    "name": "BAND",
+    "is_system_app": 0,
+    "is_updated_system_app": 0,
+    "type": "USER_INTERACTION"
+  },
+  {
+    "subject_id": "550e8400-e29b-41d4-a716-446655440000",
+    "timestamp": 1760247000000,
+    "utcoffset": 9,
+    "source_type": "PHONE",
+    "source_info": "samsung-SM-G928S-7.0",
+    "package_name": "com.instagram.android",
+    "name": "Instagram",
+    "is_system_app": 0,
+    "is_updated_system_app": 0,
+    "type": "MOVE_TO_FOREGROUND"
+  },
+  {
+    "subject_id": "550e8400-e29b-41d4-a716-446655440000",
+    "timestamp": 1760247100000,
+    "utcoffset": 9,
+    "source_type": "PHONE",
+    "source_info": "samsung-SM-G928S-7.0",
+    "package_name": "com.instagram.android",
+    "name": "Instagram",
+    "is_system_app": 0,
+    "is_updated_system_app": 0,
+    "type": "MOVE_TO_BACKGROUND"
+  }
+]
+
+### 전체 RawData 조회
+GET http://localhost:8083/api/raw-data
+
+### 실시간 통계 조회 (현재 시간 기준 24시간)
+GET http://localhost:8083/api/raw-data/realtime-stats/550e8400-e29b-41d4-a716-446655440000
+
+### Redis 데이터 확인 (redis-cli로 확인)
+# docker exec -it usageservice-redis redis-cli
+# KEYS daily_metrics:*
+# HGETALL daily_metrics:550e8400-e29b-41d4-a716-446655440000:2025-10-08
+# KEYS realtime_metrics:*
+# ZRANGE realtime_metrics:550e8400-e29b-41d4-a716-446655440000:events 0 -1 WITHSCORES
+# HGETALL realtime_metrics:550e8400-e29b-41d4-a716-446655440000:stats
