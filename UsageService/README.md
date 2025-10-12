@@ -48,15 +48,15 @@
   - [x] 카테고리 비율 계산
 
 ### Phase 5: 일일 배치 작업 
-- [ ] DailyMetricsBatchService 구현
-- [ ] 매일 00:00 Cron 스케줄러
-- [ ] Redis → DB 저장
-  - [ ] DailyUserMetrics 저장
-  - [ ] DailyCategoryUsage 저장 (카테고리별)
-  - [ ] DailyTopApps 저장 (Top 3)
-- [ ] Most Active Hour 계산
-- [ ] 카테고리 비율 계산
-- [ ] 부분 실패 허용 (한 사용자 실패해도 다른 사용자는 저장)
+- [x] DailyMetricsBatchService 구현
+- [x] 매일 00:00 Cron 스케줄러
+- [x] Redis → DB 저장
+  - [x] DailyUserMetrics 저장
+  - [x] DailyCategoryUsage 저장 (카테고리별)
+  - [x] DailyTopApps 저장 (Top 3)
+- [x] Most Active Hour 계산
+- [x] 카테고리 비율 계산
+- [x] 부분 실패 허용 (한 사용자 실패해도 다른 사용자는 저장)
 
 ### Phase 6: 테스트 코드 
 - [x] AppUsageTrackerTest
@@ -68,11 +68,11 @@
   - [x] CSV 파일 로드
   - [x] 카테고리 매핑 정확도
   - [x] NULL 처리
-- [ ] DailyMetricsBatchServiceTest
-  - [ ] 배치 변환 로직
-  - [ ] Top 3 앱 추출
-  - [ ] Most Active Hour 계산
-  - [ ] 부분 실패 허용
+- [x] DailyMetricsBatchServiceTest
+  - [x] 배치 변환 로직
+  - [x] Top 3 앱 추출
+  - [x] Most Active Hour 계산
+  - [x] 부분 실패 허용
 
 ---
 
