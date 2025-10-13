@@ -79,6 +79,33 @@ public class UserService {
         System.out.println("✅ User logout completed: " + nickname);
     }
 
+    public void changeNickname(String nickname, String newNickname) {
+        User user = userRepository.findByNickname(nickname)
+                .orElseThrow(() -> new IllegalArgumentException("❌ 사용자 없음: " + nickname));
+
+        // ✅ Redis에서 토큰 유효성 검증
+        String redisKey = "access:" + nickname;
+        String storedToken = redisTemplate.opsForValue().get(redisKey);
+
+        if (storedToken == null) {
+            throw new IllegalStateException("❌ 유효한 세션(토큰)이 없습니다. 다시 로그인해주세요.");
+        }
+
+        if (!jwtUtil.validateToken(storedToken, user.getNickname())) {
+            throw new IllegalStateException("❌ 토큰이 만료되었거나 유효하지 않습니다.");
+        }
+
+        // ✅ 닉네임 변경 (중복 체크 포함)
+        if (userRepository.existsByNickname(newNickname)) {
+            throw new IllegalArgumentException("❌ 이미 사용 중인 닉네임입니다: " + newNickname);
+        }
+
+        user.changeNickname(newNickname);
+        userRepository.save(user);
+
+        System.out.println("✅ Nickname changed from " + nickname + " → " + newNickname);
+    }
+
     public void changePassword(String nickname, String oldPassword, String newPassword) {
         User user = userRepository.findByNickname(nickname)
                 .orElseThrow(() -> new IllegalArgumentException("❌ 사용자 없음: " + nickname));
@@ -99,6 +126,38 @@ public class UserService {
         userRepository.save(user); // 👉 이벤트 발행됨
         System.out.println("✅ Password changed for user: " + nickname);
     }
+
+
+    @Transactional
+    public void changeProfileImage(String nickname, int newProfileImageNumber) {
+        User user = userRepository.findByNickname(nickname)
+                .orElseThrow(() -> new IllegalArgumentException("❌ 사용자 없음: " + nickname));
+
+        // ✅ Redis에서 토큰 존재 확인
+        String redisKey = "access:" + nickname;
+        String storedToken = redisTemplate.opsForValue().get(redisKey);
+
+        if (storedToken == null) {
+            throw new IllegalStateException("❌ 유효한 세션(토큰)이 없습니다. 다시 로그인해주세요.");
+        }
+
+        // ✅ Redis 토큰이 실제 JWT 유효한지 검증
+        if (!jwtUtil.validateToken(storedToken, user.getNickname())) {
+            throw new IllegalStateException("❌ 토큰이 만료되었거나 유효하지 않습니다.");
+        }
+
+        // ✅ 요청된 이미지 번호 유효성 검사
+        if (newProfileImageNumber < 1 || newProfileImageNumber > 8) {
+            throw new IllegalArgumentException("프로필 이미지 번호는 1~8 사이여야 합니다.");
+        }
+
+        // ✅ 실제 변경 처리
+        user.changeProfileImage(newProfileImageNumber);
+        userRepository.save(user);
+
+        System.out.println("🖼️ Profile image updated for user: " + nickname + " → " + newProfileImageNumber);
+    }
+
 
     public void deactivateAccount(String nickname) {
         User user = userRepository.findByNickname(nickname)

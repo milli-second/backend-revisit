@@ -14,16 +14,7 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-//
-//    @ExceptionHandler(MethodArgumentNotValidException.class)
-//    public ResponseEntity<?> handleValidationExceptions(MethodArgumentNotValidException ex) {
-//        Map<String, String> errors = new HashMap<>();
-//        ex.getBindingResult().getFieldErrors().forEach(error ->
-//                errors.put(error.getField(), error.getDefaultMessage())
-//        );
-//        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors); // ✅ 무조건 400
-//    }
-// ✅ 잘못된 입력값 (닉네임 중복, 사용자 없음 등)
+
 @ExceptionHandler(IllegalArgumentException.class)
 public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException e) {
     return ResponseEntity
@@ -71,4 +62,5 @@ public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgument
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("error", "서버 내부 오류가 발생했습니다."));
     }
+
 }

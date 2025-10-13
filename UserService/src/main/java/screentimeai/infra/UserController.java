@@ -56,8 +56,32 @@ public class UserController {
         return "User signed up: " + request.getNickname();
     }
 
+    // ✅ 닉네임 변경
+    @PatchMapping("/change/nickname")
+    public ResponseEntity<String> changeNickname(
+            @RequestHeader("Authorization") String token,
+            @RequestBody Map<String, String> body
+    ) {
+        // 1️⃣ 토큰에서 기존 닉네임 추출
+        String accessToken = token.replace("Bearer ", "");
+        String currentNickname = jwtUtil.getUsernameFromToken(accessToken);
+        System.out.println("nickname from token(change-nickname): " + currentNickname);
+
+        // 2️⃣ 요청 JSON 파싱
+        String newNickname = body.get("newNickname");
+        if (newNickname == null || newNickname.isBlank()) {
+            return ResponseEntity.badRequest().body("❌ newNickname 필드가 누락되었습니다.");
+        }
+
+        // 3️⃣ 서비스 호출
+        userService.changeNickname(currentNickname, newNickname);
+
+        return ResponseEntity.ok("닉네임이 성공적으로 변경되었습니다.");
+    }
+
+
     // ✅ 비밀번호 변경
-    @PostMapping("/change-password")
+    @PostMapping("/change/password")
     public ResponseEntity<String> changePassword(
             @RequestHeader("Authorization") String token,
             @RequestBody Map<String, String> body
@@ -76,4 +100,31 @@ public class UserController {
 
         return ResponseEntity.ok("비밀번호가 성공적으로 변경되었습니다.");
     }
+
+    // ✅ 프로필 이미지 변경
+    @PatchMapping("/change/profile-image")
+    public ResponseEntity<String> changeProfileImage(
+            @RequestHeader("Authorization") String token,
+            @RequestBody Map<String, Integer> body
+    ) {
+        // 1️⃣ 토큰에서 닉네임 추출
+        String accessToken = token.replace("Bearer ", "");
+        String nickname = jwtUtil.getUsernameFromToken(accessToken);
+        System.out.println("nickname from token(change-profile-image): " + nickname);
+
+        // 2️⃣ 요청 JSON 파싱
+        Integer newProfileImageNumber = body.get("profileImageNumber");
+        if (newProfileImageNumber == null) {
+            return ResponseEntity.badRequest().body("❌ profileImageNumber 필드가 누락되었습니다.");
+        }
+
+        // 3️⃣ 서비스 호출 (→ 내부에서 Redis 인증)
+        userService.changeProfileImage(nickname, newProfileImageNumber);
+
+        return ResponseEntity.ok("프로필 이미지가 성공적으로 변경되었습니다.");
+    }
+
+
+
+
 }
