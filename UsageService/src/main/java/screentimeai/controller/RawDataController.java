@@ -62,6 +62,7 @@ public class RawDataController {
             }
         }
 
+
         // 신규 데이터만 Redis 집계 및 DB 저장
         int processedCount = 0;
         if (!newDataList.isEmpty()) {

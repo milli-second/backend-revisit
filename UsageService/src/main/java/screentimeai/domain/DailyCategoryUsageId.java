@@ -28,7 +28,6 @@ public class DailyCategoryUsageId implements Serializable {
                Objects.equals(summaryDate, that.summaryDate) &&
                Objects.equals(categoryId, that.categoryId);
     }
-
     @Override
     public int hashCode() {
         return Objects.hash(subjectId, summaryDate, categoryId);

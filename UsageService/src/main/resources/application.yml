@@ -37,7 +37,6 @@ spring:
       port: 6379
       database: 1   # userService 인증용 Redis DB index
 
-
 logging:
   level:
     org.hibernate.SQL: debug

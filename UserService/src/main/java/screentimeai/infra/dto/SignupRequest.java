@@ -1,7 +1,6 @@
 package screentimeai.infra.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.*;
 
 public class SignupRequest {
 
@@ -11,6 +10,12 @@ public class SignupRequest {
             message = "닉네임은 영문과 숫자 조합으로 5~20자 이내여야 합니다."
     )
     private String nickname;
+
+    @NotNull(message = "프로필 이미지는 반드시 선택해야 합니다.")
+    @Min(value = 1, message = "프로필 번호는 1~8 사이여야 합니다.")
+    @Max(value = 8, message = "프로필 번호는 1~8 사이여야 합니다.")
+    private Integer profileImageNumber; // ✅ Integer로 변경!
+
 
     @NotBlank(message = "비밀번호는 필수입니다.")
     @Pattern(
@@ -25,5 +30,8 @@ public class SignupRequest {
 
     public String getPassword() {
         return password;
+    }
+    public Integer getProfileImageNumber() {
+        return profileImageNumber;
     }
 }

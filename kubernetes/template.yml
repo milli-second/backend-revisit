@@ -1,5 +1,4 @@
 ---
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -118,7 +117,6 @@ spec:
             periodSeconds: 5
             failureThreshold: 5
 
-
 ---
 
 
@@ -152,9 +150,7 @@ spec:
   selector:
     app: insightservice
 
-
 ---
-
 
 apiVersion: v1
 kind: Service

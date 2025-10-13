@@ -7,7 +7,6 @@ import org.springframework.transaction.annotation.Transactional;
 import screentimeai.domain.*;
 import screentimeai.config.security.JwtUtil;
 
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 
@@ -20,7 +19,6 @@ public class UserService {
     private final JwtUtil jwtUtil; // ✅ JwtUtil도 주입받기
 
 
-
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, @Qualifier("authRedisTemplate") RedisTemplate<String,String> redisTemplate, JwtUtil jwtUtil) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
@@ -29,7 +27,7 @@ public class UserService {
 
     }
 
-    public void signup(String nickname, String rawPassword) {
+    public void signup(String nickname, String rawPassword,Integer profileImageNumber) {
         if (userRepository.existsByNickname(nickname)) {
             throw new IllegalArgumentException("이미 사용 중인 닉네임입니다: " + nickname);
         }
@@ -37,7 +35,8 @@ public class UserService {
         User user = new User();
         user.setNickname(nickname);
         //user.setUuid(UUID.randomUUID().toString());
-        user.signup(rawPassword, passwordEncoder);
+        user.setProfile_image_number(profileImageNumber);
+        user.signup(rawPassword, passwordEncoder,profileImageNumber);
         userRepository.save(user); // 👉 save + flush에서 DomainEvent 발행
         System.out.println("✅ User signup completed: " + nickname);
     }

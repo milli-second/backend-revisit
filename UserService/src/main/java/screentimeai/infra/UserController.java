@@ -8,7 +8,6 @@ import screentimeai.domain.User;
 import screentimeai.config.security.JwtUtil;
 import screentimeai.infra.dto.LoginRequest;
 import screentimeai.infra.dto.SignupRequest;
-
 import java.util.Map;
 
 @RestController
@@ -34,7 +33,6 @@ public class UserController {
         //User user = userService.login(request.getNickname(), request.getPassword());
         //String token = jwtUtil.generateToken(user.getNickname());
 
-
         return ResponseEntity.ok(Map.of(
                 "token", token,
                 "nickname", request.getNickname()
@@ -50,12 +48,11 @@ public class UserController {
         String nickname = jwtUtil.getUsernameFromToken(accessToken);
         userService.logout(nickname);
         return ResponseEntity.ok("로그아웃 완료");
-
     }
 
     @PostMapping("/signup")
     public String signup(@Valid @RequestBody SignupRequest request) {
-        userService.signup(request.getNickname(), request.getPassword());
+        userService.signup(request.getNickname(), request.getPassword(),request.getProfileImageNumber());
         return "User signed up: " + request.getNickname();
     }
 

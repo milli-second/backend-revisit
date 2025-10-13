@@ -26,6 +26,8 @@ public class User {
 
     @Column(unique = true, updatable = false, nullable = false)
     private String uuid; // 🔥 외부 참조용 글로벌 ID
+    private int profile_image_number = 1; // 기본값 1번 프로필
+
 
     // ✅ 엔티티 생성 시 자동으로 UUID 부여
     @PrePersist
@@ -34,13 +36,13 @@ public class User {
             this.uuid = UUID.randomUUID().toString();
         }
     }
-
     @Transient
     private final List<Object> domainEvents = new ArrayList<>();
 
-    public void signup(String rawPassword, PasswordEncoder encoder) {
+    public void signup(String rawPassword, PasswordEncoder encoder,int profileImageNumber) {
         this.password = encoder.encode(rawPassword);
         this.domainEvents.add(new SignedUp(this));
+        this.profile_image_number = profileImageNumber; // ✅ 프로필 번호 설정
     }
 
     public void login(String rawPassword, PasswordEncoder encoder) {
@@ -70,7 +72,6 @@ public class User {
         this.domainEvents.add(new AccountDeactivated(this));
     }
 
-
     @DomainEvents
     public Collection<Object> events() {
         return domainEvents;
@@ -80,11 +81,6 @@ public class User {
     public void clearEvents() {
         domainEvents.clear();
     }
-
-//    @PostPersist
-//    public void onPostPersist() {
-//        this.markSignedUp();
-//    }
 
 }
 

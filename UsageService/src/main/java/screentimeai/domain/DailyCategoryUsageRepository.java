@@ -9,6 +9,5 @@ import java.util.UUID;
 
 @Repository
 public interface DailyCategoryUsageRepository extends JpaRepository<DailyCategoryUsage, DailyCategoryUsageId> {
-
     List<DailyCategoryUsage> findBySubjectIdAndSummaryDate(UUID subjectId, LocalDate summaryDate);
 }
