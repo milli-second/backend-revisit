@@ -1,0 +1,3 @@
+rootProject.name = 'screen_time_ai'
+
+include 'UsageService'
