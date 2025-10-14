@@ -12,7 +12,7 @@ import screentimeai.infra.dto.SignupRequest;
 import java.util.Map;
 
 @RestController
-@RequestMapping(value="/api/v1/users")
+@RequestMapping(value="/users")
 public class UserController {
     private final UserService userService;
     private final JwtUtil jwtUtil;
