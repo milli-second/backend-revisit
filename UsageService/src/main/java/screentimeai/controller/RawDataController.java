@@ -1,22 +1,31 @@
 package screentimeai.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import screentimeai.domain.RawData;
-import screentimeai.domain.RawDataRepository;
+import screentimeai.domain.entity.RawData;
+import screentimeai.domain.repository.RawDataRepository;
 import screentimeai.dto.RawDataRequest;
 import screentimeai.service.DailyMetricsAggregator;
+import screentimeai.service.DailyMetricsBatchService;
 
-import java.time.Duration;
+import java.time.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Tag(name = "Raw Data", description = "원본 사용 데이터 수집 및 조회 API")
 @RestController
 @RequestMapping("/usage/raw-data")
 @RequiredArgsConstructor
@@ -25,13 +34,20 @@ public class RawDataController {
 
     private final RawDataRepository rawDataRepository;
     private final DailyMetricsAggregator metricsAggregator;
+    private final DailyMetricsBatchService batchService;
     private final RedisTemplate<String, Object> redisTemplate;
 
     /**
      * RawData 저장 API (단건 또는 List 모두 처리)
      */
+    @Operation(
+        summary = "원본 사용 데이터 저장",
+        description = "사용자의 앱/웹사이트 사용 기록을 수집하여 저장합니다. Redis를 통한 멱등성 처리로 중복 방지하며, 실시간 집계 및 TimescaleDB에 이력을 저장합니다."
+    )
     @PostMapping
-    public ResponseEntity<String> createRawData(@RequestBody List<RawDataRequest> rawDataRequestList) {
+    public ResponseEntity<String> createRawData(
+            @Parameter(description = "저장할 원본 데이터 리스트", required = true)
+            @RequestBody List<RawDataRequest> rawDataRequestList) {
         log.info("Received {} raw data records", rawDataRequestList.size());
 
         // DTO를 Entity로 변환
@@ -39,7 +55,7 @@ public class RawDataController {
                 .map(RawDataRequest::toEntity)
                 .collect(Collectors.toList());
 
-        // Redis 멱등성 키로 중복 체크 및 집계
+        // Redis 멱등성 키로 중복 체크
         List<RawData> newDataList = new ArrayList<>();
         int duplicateCount = 0;
 
@@ -62,32 +78,97 @@ public class RawDataController {
             }
         }
 
-
-        // 신규 데이터만 Redis 집계 및 DB 저장
+        // 신규 데이터를 날짜 기준으로 분리 (오늘 0시 기준)
         int processedCount = 0;
-        if (!newDataList.isEmpty()) {
-            // Redis 실시간 집계
-            metricsAggregator.aggregateRawDataBatch(newDataList);
+        int historicalCount = 0;
+        int realtimeCount = 0;
 
-            // TimescaleDB에 원본 데이터 저장 (이력 관리용)
+        if (!newDataList.isEmpty()) {
+            // 1. 오늘 날짜 데이터와 과거 날짜 데이터 분리
+            List<RawData> realtimeData = new ArrayList<>();
+            List<RawData> historicalData = new ArrayList<>();
+
+
+            for (RawData rawData : newDataList) {
+                int utcOffset = rawData.getUtcoffset() != null ? rawData.getUtcoffset() : 9;
+                java.time.LocalDate dataDate = getLocalDate(rawData.getTimestamp(), utcOffset);
+                java.time.LocalDate today = java.time.LocalDate.now(
+                        java.time.ZoneId.ofOffset("UTC", java.time.ZoneOffset.ofHours(utcOffset)));
+
+                ZoneOffset offset = ZoneOffset.ofHours(utcOffset);
+                OffsetDateTime dataTime = rawData.getTimestamp().atOffset(offset);
+                OffsetDateTime cutoff = OffsetDateTime.now(offset).minusHours(24);
+
+                if (dataTime.isAfter(cutoff)) {
+                    realtimeData.add(rawData);
+                }
+
+                if (!dataDate.equals(today)) {
+                    historicalData.add(rawData);
+                }
+            }
+
+            // 2. 실시간 데이터 → Redis 집계 (24시간 슬라이딩 윈도우)
+            if (!realtimeData.isEmpty()) {
+                metricsAggregator.aggregateRawDataBatch(realtimeData);
+                realtimeCount = realtimeData.size();
+                log.info("Aggregated {} realtime events to Redis", realtimeCount);
+            }
+
+            // 3. 과거 데이터 → 즉시 배치 집계하여 DB 저장
+            if (!historicalData.isEmpty()) {
+                batchService.processHistoricalDataBatch(historicalData);
+                historicalCount = historicalData.size();
+                log.info("Processed {} historical events immediately", historicalCount);
+            }
+
+            // 4. TimescaleDB에 원본 데이터 저장 (이력 관리용)
             rawDataRepository.saveAll(newDataList);
 
             processedCount = newDataList.size();
         }
 
-        log.info("Processed {} new events ({} duplicates skipped)",
-                processedCount, duplicateCount);
+        log.info("Processed {} new events ({} realtime, {} historical, {} duplicates skipped)",
+                processedCount, realtimeCount, historicalCount, duplicateCount);
 
         return ResponseEntity.ok(String.format(
-                "Processed %d out of %d events (aggregated to Redis and saved to DB)",
-                processedCount, rawDataList.size()));
+                "Processed %d out of %d events (%d realtime to Redis, %d historical to DB, %d duplicates skipped)",
+                processedCount, rawDataList.size(), realtimeCount, historicalCount, duplicateCount));
     }
 
     /**
-     * 전체 RawData 조회 (테스트용)
+     * 특정 사용자의 RawData 조회 (테스트용)
      */
-    @GetMapping
-    public ResponseEntity<List<RawData>> getAllRawData() {
-        return ResponseEntity.ok(rawDataRepository.findAll());
+    @Operation(
+        summary = "특정 사용자 원본 데이터 조회(개발용)",
+        description = "특정 사용자(subject_id)의 원본 사용 데이터를 조회합니다."
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "조회 성공",
+            content = @Content(schema = @Schema(implementation = RawData.class))
+        ),
+        @ApiResponse(responseCode = "404", description = "데이터를 찾을 수 없음")
+    })
+    @GetMapping("/{subjectId}")
+    public ResponseEntity<List<RawData>> getRawDataBySubjectId(
+            @Parameter(description = "사용자 ID (UUID)", required = true, example = "550e8400-e29b-41d4-a716-446655440000")
+            @PathVariable UUID subjectId) {
+        List<RawData> data = rawDataRepository.findBySubjectId(subjectId);
+
+        if (data.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(data);
+    }
+
+    /**
+     * UTC offset을 고려한 LocalDate 계산
+     */
+    private java.time.LocalDate getLocalDate(Instant timestamp, int utcOffsetHours) {
+        ZoneId zoneId = ZoneId.ofOffset("UTC", java.time.ZoneOffset.ofHours(utcOffsetHours));
+        return timestamp.atZone(zoneId).toLocalDate();
     }
 }
