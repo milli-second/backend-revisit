@@ -1,5 +1,5 @@
 ### RawData 저장 테스트 (UUID 형식, 밀리초 timestamp)
-POST http://localhost:8083/api/raw-data
+POST http://localhost:8088/usage/raw-data
 Content-Type: application/json
 
 [
@@ -42,10 +42,10 @@ Content-Type: application/json
 ]
 
 ### 전체 RawData 조회
-GET http://localhost:8083/api/raw-data
+GET http://localhost:8088/usage/raw-data
 
 ### 실시간 통계 조회 (현재 시간 기준 24시간)
-GET http://localhost:8083/api/raw-data/realtime-stats/550e8400-e29b-41d4-a716-446655440000
+GET http://localhost:8088/usage/raw-data/realtime-stats/550e8400-e29b-41d4-a716-446655440000
 
 ### Redis 데이터 확인 (redis-cli로 확인)
 # docker exec -it usageservice-redis redis-cli

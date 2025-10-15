@@ -1,41 +1,34 @@
 server:
   port: 8088
 
----
-
 spring:
-  config:
-    activate:
-      on-profile: default
   cloud:
     gateway:
-#<<< API Gateway / Routes
       routes:
         - id: userservice
-          uri: http://localhost:8081
+          uri: ${USERSERVICE_URI:http://localhost:8081}
           predicates:
-            - Path=/users/**, 
-        - id: insightservice
-          uri: http://localhost:8082
-          predicates:
-            - Path=/insights/**, /viewInsightReports/**
+            - Path=/users/**
         - id: usageservice
-          uri: http://localhost:8083
+          uri: ${USAGESERVICE_URI:http://localhost:8082}
           predicates:
-            - Path=/screenData/**, /viewUsageReports/**
+            - Path=/usage/**
+        - id: insightservice
+          uri: ${INSIGHTSERVICE_URI:http://localhost:8083}
+          predicates:
+            - Path=/insights/**
         - id: frontend
-          uri: http://localhost:8080
+          uri: ${FRONTEND_URI:http://localhost:8080}
           predicates:
             - Path=/**
-#>>> API Gateway / Routes
+
       globalcors:
         corsConfigurations:
           '[/**]':
             allowedOriginPatterns:
-              #- "*"
               - "http://localhost:3000"
+              - "*"
             allowedMethods:
-              #- "*"
               - GET
               - POST
               - PUT
@@ -44,43 +37,3 @@ spring:
             allowedHeaders:
               - "*"
             allowCredentials: true
-
-
----
-
-spring:
-  config:
-    activate:
-      on-profile: docker
-  cloud:
-    gateway:
-      routes:
-        - id: userservice
-          uri: http://userservice:8080
-          predicates:
-            - Path=/users/**, 
-        - id: insightservice
-          uri: http://insightservice:8080
-          predicates:
-            - Path=/insights/**, 
-        - id: usageservice
-          uri: http://usageservice:8080
-          predicates:
-            - Path=/screenData/**, 
-        - id: frontend
-          uri: http://frontend:8080
-          predicates:
-            - Path=/**
-      globalcors:
-        corsConfigurations:
-          '[/**]':
-            allowedOriginPatterns:
-              - "*"
-            allowedMethods:
-              - "*"
-            allowedHeaders:
-              - "*"
-            allowCredentials: true
-
-server:
-  port: 8080

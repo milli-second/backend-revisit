@@ -18,7 +18,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/raw-data")
+@RequestMapping("/usage/raw-data")
 @RequiredArgsConstructor
 @Slf4j
 public class RawDataController {
@@ -89,19 +89,5 @@ public class RawDataController {
     @GetMapping
     public ResponseEntity<List<RawData>> getAllRawData() {
         return ResponseEntity.ok(rawDataRepository.findAll());
-    }
-
-    /**
-     * 실시간 통계 조회 API (현재 시간 기준 24시간)
-     */
-    @GetMapping("/realtime-stats/{subjectId}")
-    public ResponseEntity<Map<Object, Object>> getRealtimeStats(@PathVariable UUID subjectId) {
-        Map<Object, Object> stats = metricsAggregator.getRealtimeStats(subjectId);
-
-        if (stats.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        return ResponseEntity.ok(stats);
     }
 }

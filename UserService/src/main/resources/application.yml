@@ -1,20 +1,14 @@
-server:
-  port: 8081
-
 spring:
   application:
     name: userservice
+
   data:
     redis:
-      #host: 210.178.40.108
       host: localhost
       port: 6379
       database: 0   # userService 인증용 Redis DB index
 
   datasource:
-    #url: jdbc:postgresql://localhost:5432/userservice
-    #url: jdbc:postgresql://localhost:5433/userservice
-    #url: jdbc:postgresql://210.178.40.108:5432/userservice
     url: jdbc:postgresql://210.178.40.108:30032/userservice
     driver-class-name: org.postgresql.Driver
     username: postgres
@@ -22,7 +16,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update   # ddl-auto는 properties 안이 아니라 hibernate 아래
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -34,13 +28,10 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      #value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
     consumer:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      #value-deserializer: org.springframework.kafka.support.serializer.JsonSerializer
-
       properties:
         spring.json.trusted.packages: "*"
 
@@ -60,8 +51,8 @@ spring:
           destination: user_password_changed
           content-type: application/json
         eventProducer-out-4:
-            destination: user_deactivated
-            content-type: application/json
+          destination: user_deactivated
+          content-type: application/json
 
 logging:
   level:
@@ -70,6 +61,37 @@ logging:
 
 jwt:
   secret: ${JWT_SECRET_KEY:my-default-secret7e9f3b4c5d7c5d8e4f12a9ec17f1f4d29c6b1f8a2}
+
+---
+# 로컬 개발 환경
+spring:
+  config:
+    activate:
+      on-profile: default
+
+server:
+  port: 8081
+
+---
+# Docker/Kubernetes 환경
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+  data:
+    redis:
+      host: redis
+      port: 6379
+
+  datasource:
+    url: jdbc:postgresql://userservice-db:5432/userservice
+
+  kafka:
+    bootstrap-servers: my-kafka:9092
+
+server:
+  port: 8080
 
 
 
