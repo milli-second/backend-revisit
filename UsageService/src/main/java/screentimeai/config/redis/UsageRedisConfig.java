@@ -34,8 +34,20 @@ public class UsageRedisConfig {
     public RedisTemplate<String, Object> usageRedisTemplate() {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(usageRedisConnectionFactory());
-        template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+
+        // ✅ 문자열 key 직렬화
+        StringRedisSerializer stringSerializer = new StringRedisSerializer();
+        // ✅ JSON value 직렬화
+        GenericJackson2JsonRedisSerializer jsonSerializer = new GenericJackson2JsonRedisSerializer();
+
+        // ✅ 모든 영역에서 동일한 직렬화기 사용
+        template.setKeySerializer(stringSerializer);
+        template.setValueSerializer(jsonSerializer);
+        template.setHashKeySerializer(stringSerializer);
+        template.setHashValueSerializer(jsonSerializer);
+
+        template.afterPropertiesSet();
         return template;
     }
+
 }
