@@ -1,5 +1,6 @@
 package screentimeai.config.security;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -33,11 +34,15 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, RedisTemplate<String, String> authRedisTemplate) throws Exception {
+    public SecurityFilterChain filterChain(
+            HttpSecurity http,
+            @Qualifier("authRedisTemplate") RedisTemplate<String, String> authRedisTemplate
+    ) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable) // JWT 기반이라 CSRF 비활성화
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST,"/users/signup", "/users/login").permitAll() // 회원가입/로그인만 허용
+                        .requestMatchers(HttpMethod.POST,"/api/v1/users/signup", "/api/v1/users/login").permitAll() // 회원가입/로그인만 허용
+                        .requestMatchers("/users/swagger-ui.html", "/users/swagger-ui/**", "/users/v3/api-docs", "/users/v3/api-docs/**").permitAll() // Swagger 허용
                         .anyRequest().authenticated() // 나머지는 인증 필요
                 )
                 .sessionManagement(session ->
