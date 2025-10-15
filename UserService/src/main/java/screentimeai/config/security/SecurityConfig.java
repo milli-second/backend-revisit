@@ -37,7 +37,7 @@ public class SecurityConfig {
         return http
                 .csrf(AbstractHttpConfigurer::disable) // JWT 기반이라 CSRF 비활성화
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST,"/api/v1/users/signup", "/api/v1/users/login").permitAll() // 회원가입/로그인만 허용
+                        .requestMatchers(HttpMethod.POST,"/users/signup", "/users/login").permitAll() // 회원가입/로그인만 허용
                         .anyRequest().authenticated() // 나머지는 인증 필요
                 )
                 .sessionManagement(session ->
