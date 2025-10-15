@@ -22,7 +22,7 @@ public class UserService {
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, @Qualifier("authRedisTemplate") RedisTemplate<String,String> redisTemplate, JwtUtil jwtUtil) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-        this.redisTemplate=redisTemplate;
+        this.redisTemplate = redisTemplate;
         this.jwtUtil = jwtUtil;
 
     }

@@ -75,7 +75,6 @@ public class UserController {
 
         // 3️⃣ 서비스 호출
         userService.changeNickname(currentNickname, newNickname);
-
         return ResponseEntity.ok("닉네임이 성공적으로 변경되었습니다.");
     }
 
@@ -123,8 +122,4 @@ public class UserController {
 
         return ResponseEntity.ok("프로필 이미지가 성공적으로 변경되었습니다.");
     }
-
-
-
-
 }
