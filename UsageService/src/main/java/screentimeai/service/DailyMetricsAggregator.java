@@ -3,11 +3,17 @@ package screentimeai.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import screentimeai.domain.RawData;
+import screentimeai.domain.entity.DailyUserMetrics;
+import screentimeai.domain.entity.RawData;
+import screentimeai.domain.repository.DailyUserMetricsRepository;
+import screentimeai.dto.CategoryUsageResponse;
+import screentimeai.dto.DailyUsageResponse;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * RawData를 받아서 AppUsageTracker로 위임하는 Aggregator
@@ -18,6 +24,7 @@ import java.util.UUID;
 public class DailyMetricsAggregator {
 
     private final AppUsageTracker appUsageTracker;
+    private final DailyUserMetricsRepository dailyUserMetricsRepository;
 
     /**
      * raw_data 리스트를 받아서 Redis에 실시간으로 집계
@@ -55,5 +62,41 @@ public class DailyMetricsAggregator {
      */
     public Map<Object, Object> getRealtimeStats(UUID subjectId) {
         return appUsageTracker.getRealtimeStats(subjectId);
+    }
+
+    /**
+     * 7일치 사용 패턴 조회 (오늘 기준 어제부터 7일치)
+     * @param subjectId 사용자 ID
+     * @return 각 요일별 총 사용 시간 리스트 (최신순 정렬)
+     */
+    public List<DailyUsageResponse> getWeeklyUsagePattern(UUID subjectId) {
+        LocalDate today = LocalDate.now();
+        LocalDate endDate = today.minusDays(1);  // 어제
+        LocalDate startDate = endDate.minusDays(6);  // 어제부터 7일 전
+
+        log.info("Fetching weekly usage pattern for subjectId: {} from {} to {}",
+                subjectId, startDate, endDate);
+
+        List<DailyUserMetrics> metrics = dailyUserMetricsRepository
+                .findBySubjectIdAndSummaryDateBetweenOrderBySummaryDateDesc(subjectId, startDate, endDate);
+
+        log.debug("Found {} daily metrics for subjectId: {}", metrics.size(), subjectId);
+
+        return metrics.stream()
+                .map(metric -> DailyUsageResponse.builder()
+                        .date(metric.getSummaryDate())
+                        .totalUsageMinutes(metric.getTotalUsageMinutes())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 24시간 카테고리 사용 비율 조회 (상위 4개 + 기타)
+     * @param subjectId 사용자 ID
+     * @return 카테고리별 사용 비율 리스트 (사용량 내림차순)
+     */
+    public List<CategoryUsageResponse> getCategoryUsage(UUID subjectId) {
+        log.info("Fetching category usage for subjectId: {}", subjectId);
+        return appUsageTracker.getCategoryUsage(subjectId);
     }
 }

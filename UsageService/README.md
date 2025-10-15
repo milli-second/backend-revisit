@@ -54,25 +54,35 @@
   - [x] DailyUserMetrics 저장
   - [x] DailyCategoryUsage 저장 (카테고리별)
   - [x] DailyTopApps 저장 (Top 3)
+- [x] redis와 JPA entity 분리
 - [x] Most Active Hour 계산
 - [x] 카테고리 비율 계산
 - [x] 부분 실패 허용 (한 사용자 실패해도 다른 사용자는 저장)
 
-### Phase 6: 테스트 코드 
-- [x] AppUsageTrackerTest
-  - [x] FOREGROUND/BACKGROUND 이벤트 처리
-  - [x] 비정상 사용시간 필터링
-  - [x] 자정 경계 케이스 (UTC offset)
-  - [x] 24시간 슬라이딩 윈도우
-- [x] CategoryMappingServiceTest
-  - [x] CSV 파일 로드
-  - [x] 카테고리 매핑 정확도
-  - [x] NULL 처리
-- [x] DailyMetricsBatchServiceTest
-  - [x] 배치 변환 로직
-  - [x] Top 3 앱 추출
-  - [x] Most Active Hour 계산
-  - [x] 부분 실패 허용
+
+### Phase 6: Controller 생성
+- [x] 7일치 사용량 조회 
+- [ ] 시간대 별 사용량 조회 (3일치)
+- [x] Top 3 사용량 앱 조회
+- [ ] 카테고리 비율 조회
+
+
+### Phase 7: 테스트 코드 
+- [ ] AppUsageTrackerTest
+  - [ ] FOREGROUND/BACKGROUND 이벤트 처리
+  - [ ] 비정상 사용시간 필터링
+  - [ ] 자정 경계 케이스 (UTC offset)
+  - [ ] 24시간 슬라이딩 윈도우
+- [ ] CategoryMappingServiceTest
+  - [ ] CSV 파일 로드
+  - [ ] 카테고리 매핑 정확도
+  - [ ] NULL 처리
+- [ ] DailyMetricsBatchServiceTest
+  - [ ] 배치 변환 로직
+  - [ ] Top 3 앱 추출
+  - [ ] Most Active Hour 계산
+  - [ ] 부분 실패 허용
+
 
 ---
 
@@ -138,8 +148,7 @@
   - [ ] 볼륨 마운트 설정
 
 - [ ] **환경 변수 관리**
-  - [ ] application-dev.yml 작성
-  - [ ] application-prod.yml 작성
+  - [x] application.yml 작성
   - [ ] 민감 정보 환경 변수화
     - [ ] DB 패스워드
     - [ ] Redis 패스워드
@@ -148,7 +157,7 @@
 ### Phase 10: 통합 테스트 및 검증 ⏳
 - [ ] **API 테스트**
   - [ ] Postman 컬렉션 작성
-  - [ ] POST /api/raw-data 테스트
+  - [ ] POST /usage/raw-data 테스트
     - [ ] FOREGROUND 이벤트 전송
     - [ ] BACKGROUND 이벤트 전송
     - [ ] SCREEN_ON 이벤트 전송
