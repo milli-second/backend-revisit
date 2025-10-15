@@ -1,4 +1,4 @@
-package screentimeai.domain;
+package screentimeai.domain.entity;
 
 import jakarta.persistence.Embeddable;
 import lombok.AllArgsConstructor;

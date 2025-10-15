@@ -39,6 +39,27 @@ logging:
     org.hibernate.SQL: debug
     org.hibernate.type.descriptor.sql: trace
 
+  data:
+    rest:
+      base-path: /api
+      detection-strategy: annotated
+
+springdoc:
+  api-docs:
+    path: /usage/v3/api-docs
+  swagger-ui:
+    path: /usage/swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  show-actuator: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+      base-path: /actuator
+
 ---
 # 로컬 개발 환경
 spring:
