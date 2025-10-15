@@ -26,6 +26,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        // signup, login, swagger 경로는 JWT 필터 건너뛰기
+        return path.equals("/users/signup") ||
+               path.equals("/users/login") ||
+               path.startsWith("/users/swagger-ui") ||
+               path.startsWith("/users/v3/api-docs") ||
+               path.equals("/users/swagger-ui.html");
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     @NotNull HttpServletResponse response,
                                     @NotNull FilterChain filterChain)

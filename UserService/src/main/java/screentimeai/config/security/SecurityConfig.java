@@ -41,7 +41,7 @@ public class SecurityConfig {
         return http
                 .csrf(AbstractHttpConfigurer::disable) // JWT 기반이라 CSRF 비활성화
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST,"/api/v1/users/signup", "/api/v1/users/login").permitAll() // 회원가입/로그인만 허용
+                        .requestMatchers(HttpMethod.POST,"/users/signup", "/users/login").permitAll() // 회원가입/로그인만 허용
                         .requestMatchers("/users/swagger-ui.html", "/users/swagger-ui/**", "/users/v3/api-docs", "/users/v3/api-docs/**").permitAll() // Swagger 허용
                         .anyRequest().authenticated() // 나머지는 인증 필요
                 )
