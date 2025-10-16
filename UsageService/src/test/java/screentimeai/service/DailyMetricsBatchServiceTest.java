@@ -10,7 +10,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
-import screentimeai.domain.*;
+
+import screentimeai.domain.entity.DailyUserMetrics;
+import screentimeai.domain.repository.DailyCategoryUsageRepository;
+import screentimeai.domain.repository.DailyUserMetricsRepository;
+import screentimeai.domain.entity.DailyCategoryUsage;
+import screentimeai.application.DailyMetricsBatchService;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -32,8 +37,6 @@ class DailyMetricsBatchServiceTest {
     @Mock
     private DailyCategoryUsageRepository categoryUsageRepository;
 
-    @Mock
-    private DailyTopAppsRepository topAppsRepository;
 
     @Mock
     private HashOperations<String, Object, Object> hashOperations;
@@ -70,7 +73,6 @@ class DailyMetricsBatchServiceTest {
         // Then
         verify(metricsRepository, times(1)).save(any(DailyUserMetrics.class));
         verify(categoryUsageRepository, times(1)).saveAll(anyList());
-        verify(topAppsRepository, times(1)).saveAll(anyList());
         verify(redisTemplate, times(1)).delete(redisKey);
     }
 
@@ -159,58 +161,6 @@ class DailyMetricsBatchServiceTest {
         assertThat(gameUsage.getUsageMinutes()).isEqualTo(30);
     }
 
-    @Test
-    @DisplayName("DailyTopApps 추출 - Top 3 앱")
-    void testExtractTopApps() {
-        // Given
-        String redisKey = "daily_metrics:" + testSubjectId + ":" + testDate;
-        Set<String> keys = Set.of(redisKey);
-
-        Map<Object, Object> redisData = new HashMap<>();
-        redisData.put("total_usage_minutes", "200");
-        redisData.put("app:com.example.app1", "100");
-        redisData.put("app:com.example.app2", "60");
-        redisData.put("app:com.example.app3", "30");
-        redisData.put("app:com.example.app4", "10");  // Top 3에 포함 안 됨
-
-        when(redisTemplate.keys(anyString())).thenReturn(keys);
-        when(hashOperations.entries(redisKey)).thenReturn(redisData);
-
-        ArgumentCaptor<List<DailyTopApps>> topAppsCaptor = ArgumentCaptor.forClass(List.class);
-
-        // When
-        batchService.saveDailyMetricsToDB();
-
-        // Then
-        verify(topAppsRepository).saveAll(topAppsCaptor.capture());
-
-        List<DailyTopApps> topApps = topAppsCaptor.getValue();
-        assertThat(topApps).hasSize(3);
-
-        // Rank 1 확인
-        DailyTopApps rank1 = topApps.stream()
-                .filter(app -> app.getAppRank() == 1)
-                .findFirst()
-                .orElseThrow();
-        assertThat(rank1.getPackageName()).isEqualTo("com.example.app1");
-        assertThat(rank1.getUsageMinutes()).isEqualTo(100);
-
-        // Rank 2 확인
-        DailyTopApps rank2 = topApps.stream()
-                .filter(app -> app.getAppRank() == 2)
-                .findFirst()
-                .orElseThrow();
-        assertThat(rank2.getPackageName()).isEqualTo("com.example.app2");
-        assertThat(rank2.getUsageMinutes()).isEqualTo(60);
-
-        // Rank 3 확인
-        DailyTopApps rank3 = topApps.stream()
-                .filter(app -> app.getAppRank() == 3)
-                .findFirst()
-                .orElseThrow();
-        assertThat(rank3.getPackageName()).isEqualTo("com.example.app3");
-        assertThat(rank3.getUsageMinutes()).isEqualTo(30);
-    }
 
     @Test
     @DisplayName("Most Active Hour 계산")
@@ -253,7 +203,6 @@ class DailyMetricsBatchServiceTest {
         // Then
         verify(metricsRepository, never()).save(any());
         verify(categoryUsageRepository, never()).saveAll(anyList());
-        verify(topAppsRepository, never()).saveAll(anyList());
     }
 
     @Test
@@ -296,9 +245,6 @@ class DailyMetricsBatchServiceTest {
         data.put("category_2", "40");
         data.put("category_3", "10");
         data.put("category_4", "20");
-        data.put("app:com.example.app1", "50");
-        data.put("app:com.example.app2", "30");
-        data.put("app:com.example.app3", "20");
         return data;
     }
 }

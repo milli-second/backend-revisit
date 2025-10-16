@@ -1,5 +1,6 @@
 package screentimeai.service;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -9,17 +10,20 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.data.redis.core.ZSetOperations;
-import screentimeai.domain.RawData;
+import screentimeai.domain.entity.RawData;
+import screentimeai.application.AppUsageTracker;
+import screentimeai.application.CategoryMappingService;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
 class AppUsageTrackerTest {
@@ -36,6 +40,9 @@ class AppUsageTrackerTest {
     @Mock
     private ZSetOperations<String, Object> zSetOperations;
 
+    @Mock
+    private ValueOperations<String, Object> valueOperations;
+
     @InjectMocks
     private AppUsageTracker appUsageTracker;
 
@@ -47,9 +54,10 @@ class AppUsageTrackerTest {
         testSubjectId = UUID.randomUUID();
         testTimestamp = Instant.now();
 
-        // Common stubbings used by most tests
         lenient().when(redisTemplate.opsForHash()).thenReturn(hashOperations);
         lenient().when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+        lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        lenient().when(redisTemplate.expire(anyString(), anyLong(), any())).thenReturn(true);
         lenient().when(categoryMappingService.getCategoryId(anyString()))
                 .thenReturn(CategoryMappingService.CATEGORY_SOCIAL_COMM);
         lenient().when(categoryMappingService.isSocialCategory(anyInt())).thenReturn(true);
@@ -205,6 +213,53 @@ class AppUsageTrackerTest {
         // Then
         verify(zSetOperations, times(1))
                 .removeRangeByScore(anyString(), eq(0.0), anyDouble());
+    }
+
+    @Test
+    @DisplayName("오늘 사용량 요약 및 가장 활발한 시간대 조회")
+    void testGetTodayUsage() {
+        // Given
+        LocalDate today = LocalDate.now();
+        String dailyKey = "daily_metrics:" + testSubjectId + ":" + today;
+
+        Map<Object, Object> dailyMetrics = getObjectObjectMap();
+
+
+        when(hashOperations.entries(dailyKey)).thenReturn(dailyMetrics);
+
+        // When
+        screentimeai.infra.dto.TodayUsageSummary todayUsage = appUsageTracker.getTodayUsage(testSubjectId, 9);
+
+        // Then
+        assertNotNull(todayUsage);
+        screentimeai.infra.dto.DailyUsageSummary summary = todayUsage.getDailySummary();
+        assertNotNull(summary);
+
+        assertEquals(today, summary.getDate());
+        assertEquals(0, summary.getDawnMinutes());
+        assertEquals(120, summary.getMorningMinutes());
+        assertEquals(120, summary.getAfternoonMinutes());
+        assertEquals(15, summary.getEveningMinutes());
+
+        // mostActiveHourStart should be 14 (14:00-16:00 is 45+75=120, 8:00-10:00 is 30+60=90)
+        assertEquals(14, todayUsage.getMostActiveHourStart());
+    }
+
+    @NotNull
+    private static Map<Object, Object> getObjectObjectMap() {
+        Map<Object, Object> dailyMetrics = new HashMap<>();
+        dailyMetrics.put("hour_8", "30");
+        dailyMetrics.put("hour_9", "60");
+        dailyMetrics.put("hour_10", "30");
+        dailyMetrics.put("hour_14", "45");
+        dailyMetrics.put("hour_15", "75");
+        dailyMetrics.put("hour_22", "15");
+
+        dailyMetrics.put("dawn_minutes", "0");
+        dailyMetrics.put("morning_minutes", "120");
+        dailyMetrics.put("afternoon_minutes", "120");
+        dailyMetrics.put("evening_minutes", "15");
+        return dailyMetrics;
     }
 
     private RawData createRawData(String type, String packageName) {
