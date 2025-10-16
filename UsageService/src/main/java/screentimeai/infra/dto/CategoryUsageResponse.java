@@ -1,4 +1,4 @@
-package screentimeai.dto;
+package screentimeai.infra.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

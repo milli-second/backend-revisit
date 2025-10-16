@@ -1,4 +1,4 @@
-package screentimeai.dto;
+package screentimeai.infra.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

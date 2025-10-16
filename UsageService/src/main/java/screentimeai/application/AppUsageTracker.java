@@ -1,11 +1,11 @@
-package screentimeai.service;
+package screentimeai.application;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import screentimeai.domain.entity.RawData;
-import screentimeai.dto.CategoryUsageResponse;
+import screentimeai.infra.dto.CategoryUsageResponse;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -358,7 +358,7 @@ public class AppUsageTracker {
         return redisTemplate.opsForHash().entries(statsKey);
     }
 
-    public List<screentimeai.dto.TopApp> getTop3Apps(UUID subjectId) {
+    public List<screentimeai.infra.dto.TopApp> getTop3Apps(UUID subjectId) {
         String eventsKey = buildRealtimeKey(subjectId) + ":events";
 
         long twentyFourHoursAgo = Instant.now().minusSeconds(24 * 60 * 60).toEpochMilli();
@@ -392,12 +392,12 @@ public class AppUsageTracker {
                 .limit(3)
                 .toList();
 
-        List<screentimeai.dto.TopApp> topApps = new ArrayList<>();
+        List<screentimeai.infra.dto.TopApp> topApps = new ArrayList<>();
         for (int i = 0; i < sortedApps.size(); i++) {
             Map.Entry<String, Integer> entry = sortedApps.get(i);
             String packageName = entry.getKey();
             String appName = packageToAppName.get(packageName);
-            topApps.add(new screentimeai.dto.TopApp(i + 1, appName, packageName, entry.getValue()));
+            topApps.add(new screentimeai.infra.dto.TopApp(i + 1, appName, packageName, entry.getValue()));
         }
 
         log.debug("Top 3 apps calculated for subjectId={}: {} apps found", subjectId, topApps.size());
@@ -426,10 +426,10 @@ public class AppUsageTracker {
         // 이벤트 분석하여 카테고리별 사용시간 집계
         for (Object event : events) {
             String[] parts = event.toString().split(":");
-            if (parts.length < 3) continue;
+            if (parts.length < 4) continue;
 
-            int categoryId = Integer.parseInt(parts[1]);
-            int minutes = Integer.parseInt(parts[2]);
+            int categoryId = Integer.parseInt(parts[2]);
+            int minutes = Integer.parseInt(parts[3]);
 
             categoryUsage.merge(categoryId, minutes, Integer::sum);
             totalMinutes += minutes;
@@ -635,7 +635,7 @@ public class AppUsageTracker {
         }
     }
 
-    public screentimeai.dto.TodayUsageSummary getTodayUsage(UUID subjectId, int utcOffset) {
+    public screentimeai.infra.dto.TodayUsageSummary getTodayUsage(UUID subjectId, int utcOffset) {
         LocalDate today = getLocalDate(Instant.now(), utcOffset);
         String dailyKey = buildDailyKey(subjectId, today);
         Map<Object, Object> dailyMetrics = redisTemplate.opsForHash().entries(dailyKey);
@@ -662,7 +662,7 @@ public class AppUsageTracker {
             }
         }
 
-        screentimeai.dto.DailyUsageSummary dailySummary = screentimeai.dto.DailyUsageSummary.builder()
+        screentimeai.infra.dto.DailyUsageSummary dailySummary = screentimeai.infra.dto.DailyUsageSummary.builder()
                 .date(today)
                 .dawnMinutes(dawnMinutes)
                 .morningMinutes(morningMinutes)
@@ -670,7 +670,7 @@ public class AppUsageTracker {
                 .eveningMinutes(eveningMinutes)
                 .build();
 
-        return screentimeai.dto.TodayUsageSummary.builder()
+        return screentimeai.infra.dto.TodayUsageSummary.builder()
                 .dailySummary(dailySummary)
                 .mostActiveHourStart(mostActiveHourStart)
                 .build();

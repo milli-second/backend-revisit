@@ -1,4 +1,4 @@
-package screentimeai.controller;
+package screentimeai.infra;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -14,9 +14,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import screentimeai.domain.entity.RawData;
 import screentimeai.domain.repository.RawDataRepository;
-import screentimeai.dto.RawDataRequest;
-import screentimeai.service.DailyMetricsAggregator;
-import screentimeai.service.DailyMetricsBatchService;
+import screentimeai.infra.dto.RawDataRequest;
+import screentimeai.application.DailyMetricsAggregator;
+import screentimeai.application.DailyMetricsBatchService;
 
 import java.time.*;
 import java.util.ArrayList;

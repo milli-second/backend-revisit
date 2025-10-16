@@ -1,4 +1,4 @@
-package screentimeai.controller;
+package screentimeai.infra;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -11,12 +11,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import screentimeai.dto.CategoryUsageResponse;
-import screentimeai.dto.DailyUsageResponse;
-import screentimeai.service.DailyMetricsAggregator;
+import screentimeai.infra.dto.CategoryUsageResponse;
+import screentimeai.infra.dto.DailyUsageResponse;
+import screentimeai.application.DailyMetricsAggregator;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Tag(name = "Usage Statistics", description = "사용 통계 조회 API")
@@ -36,12 +35,12 @@ public class UsageStatsController {
         description = "특정 사용자의 현재 시간 기준 24시간 실시간 Top 3 앱 사용 통계를 Redis에서 조회합니다."
     )
     @GetMapping("/top3/{subjectId}")
-    public ResponseEntity<List<screentimeai.dto.TopApp>> getTop3Apps(
+    public ResponseEntity<List<screentimeai.infra.dto.TopApp>> getTop3Apps(
             @Parameter(description = "사용자 ID (UUID)", required = true, example = "550e8400-e29b-41d4-a716-446655440000")
             @PathVariable UUID subjectId) {
         log.info("Fetching top 3 apps for subjectId: {}", subjectId);
 
-        List<screentimeai.dto.TopApp> topApps = metricsAggregator.getTop3Apps(subjectId);
+        List<screentimeai.infra.dto.TopApp> topApps = metricsAggregator.getTop3Apps(subjectId);
 
         if (topApps.isEmpty()) {
             log.warn("No top 3 apps found for subjectId: {}", subjectId);
@@ -107,12 +106,12 @@ public class UsageStatsController {
         description = "어제, 그제는 DB, 오늘은 Redis에서 데이터를 가져와 시간대별 사용량을 반환합니다. 오늘 데이터 기준 가장 활발한 2시간의 시작 시간도 함께 반환합니다."
     )
     @GetMapping("/3day/{subjectId}")
-    public ResponseEntity<screentimeai.dto.ThreeDayUsageResponse> getThreeDayUsage(
+    public ResponseEntity<screentimeai.infra.dto.ThreeDayUsageResponse> getThreeDayUsage(
             @Parameter(description = "사용자 ID (UUID)", required = true, example = "550e8400-e29b-41d4-a716-446655440000")
             @PathVariable UUID subjectId) {
         log.info("Fetching 3-day usage for subjectId: {}", subjectId);
 
-        screentimeai.dto.ThreeDayUsageResponse threeDayUsage = metricsAggregator.getThreeDayUsage(subjectId);
+        screentimeai.infra.dto.ThreeDayUsageResponse threeDayUsage = metricsAggregator.getThreeDayUsage(subjectId);
 
         if (threeDayUsage.getDailySummaries().isEmpty()) {
             log.warn("No 3-day usage found for subjectId: {}", subjectId);
