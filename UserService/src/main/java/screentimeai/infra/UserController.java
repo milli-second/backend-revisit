@@ -1,5 +1,8 @@
 package screentimeai.infra;
 
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -8,6 +11,9 @@ import screentimeai.domain.User;
 import screentimeai.config.security.JwtUtil;
 import screentimeai.infra.dto.LoginRequest;
 import screentimeai.infra.dto.SignupRequest;
+import screentimeai.infra.dto.ChangePasswordRequest;
+import screentimeai.infra.dto.ChangeNicknameRequest;
+import screentimeai.infra.dto.ChangeProfileImageRequest;
 import java.util.Map;
 
 @RestController
@@ -40,7 +46,9 @@ public class UserController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(@RequestHeader("Authorization") String token) {
+    @SecurityRequirement(name = "JWT Authentication")
+    public ResponseEntity<String> logout(
+            @Parameter(hidden = true) @RequestHeader("Authorization") String token) {
         // Bearer 제거
         String accessToken = token.replace("Bearer ", "");
 
@@ -58,67 +66,54 @@ public class UserController {
 
     // ✅ 닉네임 변경
     @PatchMapping("/change/nickname")
+    @SecurityRequirement(name = "JWT Authentication")
     public ResponseEntity<String> changeNickname(
-            @RequestHeader("Authorization") String token,
-            @RequestBody Map<String, String> body
+            @Parameter(hidden = true) @RequestHeader("Authorization") String token,
+            @Valid @RequestBody ChangeNicknameRequest request
     ) {
         // 1️⃣ 토큰에서 기존 닉네임 추출
         String accessToken = token.replace("Bearer ", "");
         String currentNickname = jwtUtil.getUsernameFromToken(accessToken);
         System.out.println("nickname from token(change-nickname): " + currentNickname);
 
-        // 2️⃣ 요청 JSON 파싱
-        String newNickname = body.get("newNickname");
-        if (newNickname == null || newNickname.isBlank()) {
-            return ResponseEntity.badRequest().body("❌ newNickname 필드가 누락되었습니다.");
-        }
-
-        // 3️⃣ 서비스 호출
-        userService.changeNickname(currentNickname, newNickname);
+        // 2️⃣ 서비스 호출
+        userService.changeNickname(currentNickname, request.getNewNickname());
         return ResponseEntity.ok("닉네임이 성공적으로 변경되었습니다.");
     }
 
 
     // ✅ 비밀번호 변경
     @PostMapping("/change/password")
+    @SecurityRequirement(name = "JWT Authentication")
     public ResponseEntity<String> changePassword(
-            @RequestHeader("Authorization") String token,
-            @RequestBody Map<String, String> body
+            @Parameter(hidden = true) @RequestHeader("Authorization") String token,
+            @Valid @RequestBody ChangePasswordRequest request
     ) {
         // 1️⃣ 토큰에서 닉네임 추출
         String accessToken = token.replace("Bearer ", "");
         String nickname = jwtUtil.getUsernameFromToken(accessToken);
         System.out.println("nickname from token(change-password): " + nickname);
 
-        // 2️⃣ 요청 JSON 파싱
-        String oldPassword = body.get("oldPassword");
-        String newPassword = body.get("newPassword");
-
-        // 3️⃣ 서비스 호출
-        userService.changePassword(nickname, oldPassword, newPassword);
+        // 2️⃣ 서비스 호출
+        userService.changePassword(nickname, request.getOldPassword(), request.getNewPassword());
 
         return ResponseEntity.ok("비밀번호가 성공적으로 변경되었습니다.");
     }
 
     // ✅ 프로필 이미지 변경
     @PatchMapping("/change/profile-image")
+    @SecurityRequirement(name = "JWT Authentication")
     public ResponseEntity<String> changeProfileImage(
-            @RequestHeader("Authorization") String token,
-            @RequestBody Map<String, Integer> body
+            @Parameter(hidden = true) @RequestHeader("Authorization") String token,
+            @Valid @RequestBody ChangeProfileImageRequest request
     ) {
         // 1️⃣ 토큰에서 닉네임 추출
         String accessToken = token.replace("Bearer ", "");
         String nickname = jwtUtil.getUsernameFromToken(accessToken);
         System.out.println("nickname from token(change-profile-image): " + nickname);
 
-        // 2️⃣ 요청 JSON 파싱
-        Integer newProfileImageNumber = body.get("profileImageNumber");
-        if (newProfileImageNumber == null) {
-            return ResponseEntity.badRequest().body("❌ profileImageNumber 필드가 누락되었습니다.");
-        }
-
-        // 3️⃣ 서비스 호출 (→ 내부에서 Redis 인증)
-        userService.changeProfileImage(nickname, newProfileImageNumber);
+        // 2️⃣ 서비스 호출 (→ 내부에서 Redis 인증)
+        userService.changeProfileImage(nickname, request.getProfileImageNumber());
 
         return ResponseEntity.ok("프로필 이미지가 성공적으로 변경되었습니다.");
     }
