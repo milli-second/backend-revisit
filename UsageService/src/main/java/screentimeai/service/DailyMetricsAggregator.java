@@ -99,4 +99,35 @@ public class DailyMetricsAggregator {
         log.info("Fetching category usage for subjectId: {}", subjectId);
         return appUsageTracker.getCategoryUsage(subjectId);
     }
+
+    public screentimeai.dto.ThreeDayUsageResponse getThreeDayUsage(UUID subjectId) {
+        screentimeai.dto.TodayUsageSummary todaySummary = appUsageTracker.getTodayUsage(subjectId);
+
+        LocalDate today = LocalDate.now();
+        LocalDate yesterday = today.minusDays(1);
+        LocalDate dayBeforeYesterday = today.minusDays(2);
+
+        List<DailyUserMetrics> pastMetrics = dailyUserMetricsRepository
+                .findBySubjectIdAndSummaryDateBetweenOrderBySummaryDateDesc(subjectId, dayBeforeYesterday, yesterday);
+
+        List<screentimeai.dto.DailyUsageSummary> dailySummaries = new java.util.ArrayList<>();
+        dailySummaries.add(todaySummary.getDailySummary());
+
+        for (DailyUserMetrics metric : pastMetrics) {
+            dailySummaries.add(screentimeai.dto.DailyUsageSummary.builder()
+                    .date(metric.getSummaryDate())
+                    .dawnMinutes(metric.getDawnMinutes())
+                    .morningMinutes(metric.getMorningMinutes())
+                    .afternoonMinutes(metric.getAfternoonMinutes())
+                    .eveningMinutes(metric.getEveningMinutes())
+                    .build());
+        }
+
+        dailySummaries.sort(java.util.Comparator.comparing(screentimeai.dto.DailyUsageSummary::getDate).reversed());
+
+        return screentimeai.dto.ThreeDayUsageResponse.builder()
+                .dailySummaries(dailySummaries)
+                .mostActiveHourStart(todaySummary.getMostActiveHourStart())
+                .build();
+    }
 }

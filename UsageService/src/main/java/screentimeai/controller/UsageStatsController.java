@@ -102,4 +102,24 @@ public class UsageStatsController {
 
         return ResponseEntity.ok(categoryUsage);
     }
+
+    @Operation(
+        summary = "3일치 시간대별 사용 통계 조회",
+        description = "어제, 그제는 DB, 오늘은 Redis에서 데이터를 가져와 시간대별 사용량을 반환합니다. 오늘 데이터 기준 가장 활발한 2시간의 시작 시간도 함께 반환합니다."
+    )
+    @GetMapping("/3day/{subjectId}")
+    public ResponseEntity<screentimeai.dto.ThreeDayUsageResponse> getThreeDayUsage(
+            @Parameter(description = "사용자 ID (UUID)", required = true, example = "550e8400-e29b-41d4-a716-446655440000")
+            @PathVariable UUID subjectId) {
+        log.info("Fetching 3-day usage for subjectId: {}", subjectId);
+
+        screentimeai.dto.ThreeDayUsageResponse threeDayUsage = metricsAggregator.getThreeDayUsage(subjectId);
+
+        if (threeDayUsage.getDailySummaries().isEmpty()) {
+            log.warn("No 3-day usage found for subjectId: {}", subjectId);
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(threeDayUsage);
+    }
 }

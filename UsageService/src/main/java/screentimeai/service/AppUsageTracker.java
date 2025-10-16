@@ -10,10 +10,8 @@ import screentimeai.dto.CategoryUsageResponse;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * MOVE_TO_FOREGROUND/BACKGROUND 이벤트를 기반으로
@@ -46,7 +44,6 @@ public class AppUsageTracker {
      */
     public void processEvent(RawData rawData) {
         String eventType = rawData.getType();
-        UUID subjectId = rawData.getSubjectId();
 
         if ("MOVE_TO_FOREGROUND".equals(eventType)) {
             handleForegroundEvent(rawData);
@@ -74,7 +71,7 @@ public class AppUsageTracker {
                     rawData.getSubjectId(), rawData.getPackageName(), currentTimestamp - lastSessionEnd);
             // 기존 foreground 세션이 있으면 그대로 유지, 없으면 새로 시작
             Boolean exists = redisTemplate.hasKey(key);
-            if (Boolean.TRUE.equals(exists)) {
+            if (exists) {
                 return; // 이미 활성 세션이 있으면 그대로 유지
             }
         }
@@ -163,7 +160,7 @@ public class AppUsageTracker {
         if (rawData.getPackageName() != null) {
             String foregroundKey = buildForegroundKey(rawData.getSubjectId(), rawData.getPackageName());
             Boolean exists = redisTemplate.hasKey(foregroundKey);
-            if (Boolean.TRUE.equals(exists)) {
+            if (exists) {
                 redisTemplate.opsForHash().put(foregroundKey, "lastHeartbeat",
                         rawData.getTimestamp().toEpochMilli());
                 redisTemplate.expire(foregroundKey, SESSION_TTL_MINUTES, TimeUnit.MINUTES);
@@ -176,7 +173,7 @@ public class AppUsageTracker {
     /**
      * 사용시간을 Redis에 집계
      */
-    private void aggregateUsageTime(RawData rawData, Instant startTime, Instant endTime,
+    private void aggregateUsageTime(RawData rawData, Instant startTime,
                                      int usageMinutes, int utcOffset) {
         UUID subjectId = rawData.getSubjectId();
         String packageName = rawData.getPackageName();
@@ -203,7 +200,7 @@ public class AppUsageTracker {
         redisTemplate.opsForHash().increment(dailyKey, "category_" + categoryId, usageMinutes);
 
         // 5. 앱별 사용시간 (Top 3 계산용)
-        redisTemplate.opsForHash().increment(dailyKey, "app:" + packageName, usageMinutes);
+        redisTemplate.opsForHash().increment(dailyKey, "app:" + packageName + ":" + rawData.getName(), usageMinutes);
 
         // 6. 실시간 메트릭 (24시간 슬라이딩 윈도우)
         aggregateRealtimeMetrics(realtimeKey, packageName, startTime, usageMinutes, categoryId);
@@ -461,7 +458,7 @@ public class AppUsageTracker {
         // 같은 날이면 기존 로직 사용
         if (startDate.equals(endDate)) {
             int usageMinutes = (int) (usageMillis / 60000);
-            aggregateUsageTime(rawData, startTime, endTime, usageMinutes, utcOffset);
+            aggregateUsageTime(rawData, startTime, usageMinutes, utcOffset);
             return;
         }
 
@@ -482,7 +479,7 @@ public class AppUsageTracker {
             int dayUsageMinutes = (int) (dayUsageMillis / 60000);
 
             // 각 날짜별로 집계
-            aggregateUsageTimeForDate(rawData, dayStart, dayEnd, dayUsageMinutes, utcOffset, currentDate);
+            aggregateUsageTimeForDate(rawData, dayStart, dayUsageMinutes, utcOffset, currentDate);
 
             currentDate = currentDate.plusDays(1);
         }
@@ -491,7 +488,7 @@ public class AppUsageTracker {
     /**
      * 특정 날짜에 대한 사용시간 집계
      */
-    private void aggregateUsageTimeForDate(RawData rawData, Instant startTime, Instant endTime,
+    private void aggregateUsageTimeForDate(RawData rawData, Instant startTime,
                                             int usageMinutes, int utcOffset, LocalDate targetDate) {
         UUID subjectId = rawData.getSubjectId();
         String packageName = rawData.getPackageName();
@@ -517,7 +514,7 @@ public class AppUsageTracker {
         redisTemplate.opsForHash().increment(dailyKey, "category_" + categoryId, usageMinutes);
 
         // 5. 앱별 사용시간 (Top 3 계산용)
-        redisTemplate.opsForHash().increment(dailyKey, "app:" + packageName, usageMinutes);
+        redisTemplate.opsForHash().increment(dailyKey, "app:" + packageName + ":" + rawData.getName(), usageMinutes);
 
         // 6. 실시간 메트릭 (24시간 슬라이딩 윈도우)
         aggregateRealtimeMetrics(realtimeKey, packageName, startTime, usageMinutes, categoryId);
@@ -540,7 +537,7 @@ public class AppUsageTracker {
         String pattern = FOREGROUND_APP_PREFIX + subjectId + ":*";
         Set<String> keys = redisTemplate.keys(pattern);
 
-        if (keys == null || keys.isEmpty()) {
+        if (keys.isEmpty()) {
             log.debug("No active sessions found for subjectId={}", subjectId);
             return;
         }
@@ -583,5 +580,46 @@ public class AppUsageTracker {
             // 세션 삭제
             redisTemplate.delete(key);
         }
+    }
+
+    public screentimeai.dto.TodayUsageSummary getTodayUsage(UUID subjectId) {
+        LocalDate today = LocalDate.now();
+        String dailyKey = buildDailyKey(subjectId, today);
+        Map<Object, Object> dailyMetrics = redisTemplate.opsForHash().entries(dailyKey);
+
+        int dawnMinutes = dailyMetrics.get("dawn_minutes") != null ? Integer.parseInt(dailyMetrics.get("dawn_minutes").toString()) : 0;
+        int morningMinutes = dailyMetrics.get("morning_minutes") != null ? Integer.parseInt(dailyMetrics.get("morning_minutes").toString()) : 0;
+        int afternoonMinutes = dailyMetrics.get("afternoon_minutes") != null ? Integer.parseInt(dailyMetrics.get("afternoon_minutes").toString()) : 0;
+        int eveningMinutes = dailyMetrics.get("evening_minutes") != null ? Integer.parseInt(dailyMetrics.get("evening_minutes").toString()) : 0;
+
+        int[] hourlyMinutes = new int[24];
+        for (int hour = 0; hour < 24; hour++) {
+            Object usage = dailyMetrics.get("hour_" + hour);
+            hourlyMinutes[hour] = usage != null ? Integer.parseInt(usage.toString()) : 0;
+        }
+
+        int maxTwoHourUsage = -1;
+        int mostActiveHourStart = -1;
+
+        for (int i = 0; i < 23; i++) {
+            int twoHourUsage = hourlyMinutes[i] + hourlyMinutes[i+1];
+            if (twoHourUsage > maxTwoHourUsage) {
+                maxTwoHourUsage = twoHourUsage;
+                mostActiveHourStart = i;
+            }
+        }
+
+        screentimeai.dto.DailyUsageSummary dailySummary = screentimeai.dto.DailyUsageSummary.builder()
+                .date(today)
+                .dawnMinutes(dawnMinutes)
+                .morningMinutes(morningMinutes)
+                .afternoonMinutes(afternoonMinutes)
+                .eveningMinutes(eveningMinutes)
+                .build();
+
+        return screentimeai.dto.TodayUsageSummary.builder()
+                .dailySummary(dailySummary)
+                .mostActiveHourStart(mostActiveHourStart)
+                .build();
     }
 }

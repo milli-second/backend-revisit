@@ -4,103 +4,19 @@ Content-Type: application/json
 
 [
   {
-    "timestamp": 1760127200601,
+    "timestamp": 1760472422368,
     "utcoffset": 9,
     "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
     "source_type": "PHONE",
     "source_info": "Sony-G8141-8.0.0",
-    "package_name": "com.kakao.talk",
-    "name": "카카오톡",
+    "package_name": "com.fitbit.FitbitMobile",
+    "name": "Fitbit",
     "is_system_app": 0,
     "is_updated_system_app": 0,
-    "type": "MOVE_TO_FOREGROUND"
+    "type": "USER_INTERACTION"
   },
   {
-    "timestamp": 1760127200616,
-    "utcoffset": 9,
-    "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
-    "source_type": "PHONE",
-    "source_info": "Sony-G8141-8.0.0",
-    "package_name": "com.kakao.talk",
-    "name": "카카오톡",
-    "is_system_app": 0,
-    "is_updated_system_app": 0,
-    "type": "MOVE_TO_BACKGROUND"
-  },
-  {
-    "timestamp": 1760127200630,
-    "utcoffset": 9,
-    "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
-    "source_type": "PHONE",
-    "source_info": "Sony-G8141-8.0.0",
-    "package_name": "com.kakao.talk",
-    "name": "카카오톡",
-    "is_system_app": 0,
-    "is_updated_system_app": 0,
-    "type": "MOVE_TO_FOREGROUND"
-  },
-  {
-    "timestamp": 1760127201990,
-    "utcoffset": 9,
-    "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
-    "source_type": "PHONE",
-    "source_info": "Sony-G8141-8.0.0",
-    "package_name": "com.kakao.talk",
-    "name": "카카오톡",
-    "is_system_app": 0,
-    "is_updated_system_app": 0,
-    "type": "MOVE_TO_BACKGROUND"
-  },
-  {
-    "timestamp": 1760127202001,
-    "utcoffset": 9,
-    "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
-    "source_type": "PHONE",
-    "source_info": "Sony-G8141-8.0.0",
-    "package_name": "com.kakao.talk",
-    "name": "카카오톡",
-    "is_system_app": 0,
-    "is_updated_system_app": 0,
-    "type": "MOVE_TO_FOREGROUND"
-  },
-  {
-    "timestamp": 1760127225331,
-    "utcoffset": 9,
-    "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
-    "source_type": "PHONE",
-    "source_info": "Sony-G8141-8.0.0",
-    "package_name": "com.kakao.talk",
-    "name": "카카오톡",
-    "is_system_app": 0,
-    "is_updated_system_app": 0,
-    "type": "MOVE_TO_BACKGROUND"
-  },
-  {
-    "timestamp": 1760127225348,
-    "utcoffset": 9,
-    "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
-    "source_type": "PHONE",
-    "source_info": "Sony-G8141-8.0.0",
-    "package_name": "com.kakao.talk",
-    "name": "카카오톡",
-    "is_system_app": 0,
-    "is_updated_system_app": 0,
-    "type": "MOVE_TO_FOREGROUND"
-  },
-  {
-    "timestamp": 1760127226651,
-    "utcoffset": 9,
-    "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
-    "source_type": "PHONE",
-    "source_info": "Sony-G8141-8.0.0",
-    "package_name": "com.kakao.talk",
-    "name": "카카오톡",
-    "is_system_app": 0,
-    "is_updated_system_app": 0,
-    "type": "MOVE_TO_BACKGROUND"
-  },
-  {
-    "timestamp": 1760127238477,
+    "timestamp": 1760472424128,
     "utcoffset": 9,
     "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
     "source_type": "PHONE",
@@ -112,7 +28,139 @@ Content-Type: application/json
     "type": "USER_INTERACTION"
   },
   {
-    "timestamp": 1760127238884,
+    "timestamp": 1760472440301,
+    "utcoffset": 9,
+    "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
+    "source_type": "PHONE",
+    "source_info": "Sony-G8141-8.0.0",
+    "package_name": "android",
+    "name": "Android 시스템",
+    "is_system_app": 1,
+    "is_updated_system_app": 0,
+    "type": "CONFIGURATION_CHANGE"
+  },
+  {
+    "timestamp": 1760472496415,
+    "utcoffset": 9,
+    "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
+    "source_type": "PHONE",
+    "source_info": "Sony-G8141-8.0.0",
+    "package_name": "com.fitbit.FitbitMobile",
+    "name": "Fitbit",
+    "is_system_app": 0,
+    "is_updated_system_app": 0,
+    "type": "USER_INTERACTION"
+  },
+  {
+    "timestamp": 1760473008918,
+    "utcoffset": 9,
+    "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
+    "source_type": "PHONE",
+    "source_info": "Sony-G8141-8.0.0",
+    "package_name": "kaist.iclab.abc",
+    "name": "ABC Platform",
+    "is_system_app": 0,
+    "is_updated_system_app": 0,
+    "type": "USER_INTERACTION"
+  },
+  {
+    "timestamp": 1760473009412,
+    "utcoffset": 9,
+    "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
+    "source_type": "PHONE",
+    "source_info": "Sony-G8141-8.0.0",
+    "package_name": "com.google.android.googlequicksearchbox",
+    "name": "Google",
+    "is_system_app": 1,
+    "is_updated_system_app": 1,
+    "type": "USER_INTERACTION"
+  },
+  {
+    "timestamp": 1760473011479,
+    "utcoffset": 9,
+    "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
+    "source_type": "PHONE",
+    "source_info": "Sony-G8141-8.0.0",
+    "package_name": "com.nexon.da3",
+    "name": "다크어벤저3",
+    "is_system_app": 0,
+    "is_updated_system_app": 0,
+    "type": "MOVE_TO_BACKGROUND"
+  },
+  {
+    "timestamp": 1760473011570,
+    "utcoffset": 9,
+    "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
+    "source_type": "PHONE",
+    "source_info": "Sony-G8141-8.0.0",
+    "package_name": "android",
+    "name": "Android 시스템",
+    "is_system_app": 1,
+    "is_updated_system_app": 0,
+    "type": "CONFIGURATION_CHANGE"
+  },
+  {
+    "timestamp": 1760473011615,
+    "utcoffset": 9,
+    "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
+    "source_type": "PHONE",
+    "source_info": "Sony-G8141-8.0.0",
+    "package_name": "net.ib.android.smcard",
+    "name": "삼성카드",
+    "is_system_app": 0,
+    "is_updated_system_app": 0,
+    "type": "MOVE_TO_FOREGROUND"
+  },
+  {
+    "timestamp": 1760473011667,
+    "utcoffset": 9,
+    "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
+    "source_type": "PHONE",
+    "source_info": "Sony-G8141-8.0.0",
+    "package_name": "net.ib.android.smcard",
+    "name": "삼성카드",
+    "is_system_app": 0,
+    "is_updated_system_app": 0,
+    "type": "MOVE_TO_BACKGROUND"
+  },
+  {
+    "timestamp": 1760473011713,
+    "utcoffset": 9,
+    "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
+    "source_type": "PHONE",
+    "source_info": "Sony-G8141-8.0.0",
+    "package_name": "com.nexon.da3",
+    "name": "다크어벤저3",
+    "is_system_app": 0,
+    "is_updated_system_app": 0,
+    "type": "MOVE_TO_FOREGROUND"
+  },
+  {
+    "timestamp": 1760473012041,
+    "utcoffset": 9,
+    "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
+    "source_type": "PHONE",
+    "source_info": "Sony-G8141-8.0.0",
+    "package_name": "android",
+    "name": "Android 시스템",
+    "is_system_app": 1,
+    "is_updated_system_app": 0,
+    "type": "CONFIGURATION_CHANGE"
+  },
+  {
+    "timestamp": 1760473052029,
+    "utcoffset": 9,
+    "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
+    "source_type": "PHONE",
+    "source_info": "Sony-G8141-8.0.0",
+    "package_name": "kaist.iclab.abc",
+    "name": "ABC Platform",
+    "is_system_app": 0,
+    "is_updated_system_app": 0,
+    "type": "USER_INTERACTION"
+  },
+  {
+    "timestamp": 1760473144224,
     "utcoffset": 9,
     "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
     "source_type": "PHONE",
@@ -124,112 +172,40 @@ Content-Type: application/json
     "type": "USER_INTERACTION"
   },
   {
-    "timestamp": 1760127243822,
+    "timestamp": 1760473192695,
     "utcoffset": 9,
     "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
     "source_type": "PHONE",
     "source_info": "Sony-G8141-8.0.0",
-    "package_name": "com.kakao.talk",
-    "name": "카카오톡",
-    "is_system_app": 0,
+    "package_name": "android",
+    "name": "Android 시스템",
+    "is_system_app": 1,
     "is_updated_system_app": 0,
-    "type": "MOVE_TO_FOREGROUND"
+    "type": "CONFIGURATION_CHANGE"
   },
   {
-    "timestamp": 1760127244899,
+    "timestamp": 1760473228031,
     "utcoffset": 9,
     "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
     "source_type": "PHONE",
     "source_info": "Sony-G8141-8.0.0",
-    "package_name": "com.kakao.talk",
-    "name": "카카오톡",
-    "is_system_app": 0,
+    "package_name": "android",
+    "name": "Android 시스템",
+    "is_system_app": 1,
     "is_updated_system_app": 0,
-    "type": "MOVE_TO_BACKGROUND"
+    "type": "CONFIGURATION_CHANGE"
   },
   {
-    "timestamp": 1760127244907,
+    "timestamp": 1760473321827,
     "utcoffset": 9,
     "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
     "source_type": "PHONE",
     "source_info": "Sony-G8141-8.0.0",
-    "package_name": "com.kakao.talk",
-    "name": "카카오톡",
-    "is_system_app": 0,
+    "package_name": "android",
+    "name": "Android 시스템",
+    "is_system_app": 1,
     "is_updated_system_app": 0,
-    "type": "MOVE_TO_FOREGROUND"
-  },
-  {
-    "timestamp": 1760127250322,
-    "utcoffset": 9,
-    "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
-    "source_type": "PHONE",
-    "source_info": "Sony-G8141-8.0.0",
-    "package_name": "com.kakao.talk",
-    "name": "카카오톡",
-    "is_system_app": 0,
-    "is_updated_system_app": 0,
-    "type": "MOVE_TO_BACKGROUND"
-  },
-  {
-    "timestamp": 1760127250338,
-    "utcoffset": 9,
-    "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
-    "source_type": "PHONE",
-    "source_info": "Sony-G8141-8.0.0",
-    "package_name": "com.kakao.talk",
-    "name": "카카오톡",
-    "is_system_app": 0,
-    "is_updated_system_app": 0,
-    "type": "MOVE_TO_FOREGROUND"
-  },
-  {
-    "timestamp": 1760127252379,
-    "utcoffset": 9,
-    "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
-    "source_type": "PHONE",
-    "source_info": "Sony-G8141-8.0.0",
-    "package_name": "com.kakao.talk",
-    "name": "카카오톡",
-    "is_system_app": 0,
-    "is_updated_system_app": 0,
-    "type": "MOVE_TO_BACKGROUND"
-  },
-  {
-    "timestamp": 1760127252389,
-    "utcoffset": 9,
-    "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
-    "source_type": "PHONE",
-    "source_info": "Sony-G8141-8.0.0",
-    "package_name": "com.kakao.talk",
-    "name": "카카오톡",
-    "is_system_app": 0,
-    "is_updated_system_app": 0,
-    "type": "MOVE_TO_FOREGROUND"
-  },
-  {
-    "timestamp": 1760127257336,
-    "utcoffset": 9,
-    "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
-    "source_type": "PHONE",
-    "source_info": "Sony-G8141-8.0.0",
-    "package_name": "com.kakao.talk",
-    "name": "카카오톡",
-    "is_system_app": 0,
-    "is_updated_system_app": 0,
-    "type": "MOVE_TO_BACKGROUND"
-  },
-  {
-    "timestamp": 1760127257350,
-    "utcoffset": 9,
-    "subject_id": "5341e294-5cbc-59bd-bf56-99535383bf22",
-    "source_type": "PHONE",
-    "source_info": "Sony-G8141-8.0.0",
-    "package_name": "com.kakao.talk",
-    "name": "카카오톡",
-    "is_system_app": 0,
-    "is_updated_system_app": 0,
-    "type": "MOVE_TO_FOREGROUND"
+    "type": "CONFIGURATION_CHANGE"
   }
 ]
 
@@ -245,6 +221,9 @@ GET http://localhost:8088/usage/stats/weekly/5341e294-5cbc-59bd-bf56-99535383bf2
 
 ### 카테고리 비율 조회
 GET http://localhost:8088/usage/stats/category/5341e294-5cbc-59bd-bf56-99535383bf22
+
+### 3일치 시간대별 사용 통계 조회
+GET http://localhost:8088/usage/stats/3day/5341e294-5cbc-59bd-bf56-99535383bf22
 
 ### Redis 데이터 확인 (redis-cli로 확인)
 # docker exec -it usageservice-redis redis-cli
