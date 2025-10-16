@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import screentimeai.domain.entity.DailyUserMetrics;
 import screentimeai.domain.entity.RawData;
 import screentimeai.domain.repository.DailyUserMetricsRepository;
+import screentimeai.domain.repository.RawDataRepository;
 import screentimeai.dto.CategoryUsageResponse;
 import screentimeai.dto.DailyUsageResponse;
 
@@ -25,6 +26,7 @@ public class DailyMetricsAggregator {
 
     private final AppUsageTracker appUsageTracker;
     private final DailyUserMetricsRepository dailyUserMetricsRepository;
+    private final RawDataRepository rawDataRepository;
 
     /**
      * raw_data 리스트를 받아서 Redis에 실시간으로 집계
@@ -105,9 +107,18 @@ public class DailyMetricsAggregator {
     }
 
     public screentimeai.dto.ThreeDayUsageResponse getThreeDayUsage(UUID subjectId) {
-        screentimeai.dto.TodayUsageSummary todaySummary = appUsageTracker.getTodayUsage(subjectId);
+        // 사용자의 최근 raw_data에서 UTC offset 가져오기
+        RawData latestRawData = rawDataRepository.findFirstBySubjectIdOrderByTimestampDesc(subjectId);
+        int utcOffset = (latestRawData != null && latestRawData.getUtcoffset() != null)
+                ? latestRawData.getUtcoffset() : 9; // 기본값: 한국 시간 (UTC+9)
 
-        LocalDate today = LocalDate.now();
+        log.info("Using UTC offset {} for subjectId: {}", utcOffset, subjectId);
+
+        screentimeai.dto.TodayUsageSummary todaySummary = appUsageTracker.getTodayUsage(subjectId, utcOffset);
+
+        // UTC offset을 고려한 오늘 날짜 계산
+        java.time.ZoneId zoneId = java.time.ZoneId.ofOffset("UTC", java.time.ZoneOffset.ofHours(utcOffset));
+        LocalDate today = java.time.LocalDate.now(zoneId);
         LocalDate yesterday = today.minusDays(1);
         LocalDate dayBeforeYesterday = today.minusDays(2);
 

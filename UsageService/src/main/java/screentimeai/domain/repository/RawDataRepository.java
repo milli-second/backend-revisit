@@ -13,4 +13,6 @@ import java.util.UUID;
 public interface RawDataRepository extends JpaRepository<RawData, RawDataId> {
 
     List<RawData> findBySubjectId(UUID subjectId);
+
+    RawData findFirstBySubjectIdOrderByTimestampDesc(UUID subjectId);
 }

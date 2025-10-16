@@ -359,18 +359,49 @@ public class AppUsageTracker {
     }
 
     public List<screentimeai.dto.TopApp> getTop3Apps(UUID subjectId) {
-        String statsKey = buildRealtimeKey(subjectId) + ":stats";
-        Map<Object, Object> stats = redisTemplate.opsForHash().entries(statsKey);
+        String eventsKey = buildRealtimeKey(subjectId) + ":events";
+
+        long twentyFourHoursAgo = Instant.now().minusSeconds(24 * 60 * 60).toEpochMilli();
+        Set<Object> events = redisTemplate.opsForZSet().rangeByScore(eventsKey,
+                twentyFourHoursAgo, Double.MAX_VALUE);
+
+        if (events == null || events.isEmpty()) {
+            log.debug("No events found for subjectId={} in last 24 hours", subjectId);
+            return Collections.emptyList();
+        }
+
+        Map<String, Integer> appUsage = new HashMap<>();
+        Map<String, String> packageToAppName = new HashMap<>();
+
+        // 이벤트 분석하여 앱별 사용시간 집계
+        for (Object event : events) {
+            String[] parts = event.toString().split(":");
+            if (parts.length < 4) continue;
+
+            String packageName = parts[0];
+            String appName = parts[1];
+            int minutes = Integer.parseInt(parts[3]);
+
+            appUsage.merge(packageName, minutes, Integer::sum);
+            packageToAppName.put(packageName, appName);
+        }
+
+        // Top 3 앱 추출
+        List<Map.Entry<String, Integer>> sortedApps = appUsage.entrySet().stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .limit(3)
+                .toList();
 
         List<screentimeai.dto.TopApp> topApps = new ArrayList<>();
-        for (int i = 1; i <= 3; i++) {
-            String packageName = (String) stats.get("top_app_" + i + "_package_name");
-            if (packageName != null) {
-                String appName = (String) stats.get("top_app_" + i + "_app_name");
-                int minutes = Integer.parseInt(stats.get("top_app_" + i + "_minutes").toString());
-                topApps.add(new screentimeai.dto.TopApp(i, appName, packageName, minutes));
-            }
+        for (int i = 0; i < sortedApps.size(); i++) {
+            Map.Entry<String, Integer> entry = sortedApps.get(i);
+            String packageName = entry.getKey();
+            String appName = packageToAppName.get(packageName);
+            topApps.add(new screentimeai.dto.TopApp(i + 1, appName, packageName, entry.getValue()));
         }
+
+        log.debug("Top 3 apps calculated for subjectId={}: {} apps found", subjectId, topApps.size());
+
         return topApps;
     }
 
@@ -604,8 +635,8 @@ public class AppUsageTracker {
         }
     }
 
-    public screentimeai.dto.TodayUsageSummary getTodayUsage(UUID subjectId) {
-        LocalDate today = LocalDate.now();
+    public screentimeai.dto.TodayUsageSummary getTodayUsage(UUID subjectId, int utcOffset) {
+        LocalDate today = getLocalDate(Instant.now(), utcOffset);
         String dailyKey = buildDailyKey(subjectId, today);
         Map<Object, Object> dailyMetrics = redisTemplate.opsForHash().entries(dailyKey);
 
