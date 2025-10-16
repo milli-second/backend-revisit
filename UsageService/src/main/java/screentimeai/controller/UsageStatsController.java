@@ -32,24 +32,23 @@ public class UsageStatsController {
      * 실시간 통계 조회 API (현재 시간 기준 24시간)
      */
     @Operation(
-        summary = "실시간 사용 통계 조회",
-        description = "특정 사용자의 현재 시간 기준 24시간 실시간 사용 통계를 Redis에서 조회합니다."
+        summary = "실시간 Top 3 앱 조회",
+        description = "특정 사용자의 현재 시간 기준 24시간 실시간 Top 3 앱 사용 통계를 Redis에서 조회합니다."
     )
-    @GetMapping("/realtime/{subjectId}")
-    public ResponseEntity<Map<Object, Object>> getRealtimeStats(
+    @GetMapping("/top3/{subjectId}")
+    public ResponseEntity<List<screentimeai.dto.TopApp>> getTop3Apps(
             @Parameter(description = "사용자 ID (UUID)", required = true, example = "550e8400-e29b-41d4-a716-446655440000")
             @PathVariable UUID subjectId) {
-        log.info("Fetching realtime stats for subjectId: {}", subjectId);
+        log.info("Fetching top 3 apps for subjectId: {}", subjectId);
 
-        Map<Object, Object> stats = metricsAggregator.getRealtimeStats(subjectId);
+        List<screentimeai.dto.TopApp> topApps = metricsAggregator.getTop3Apps(subjectId);
 
-        if (stats.isEmpty()) {
-            log.warn("No realtime stats found for subjectId: {}", subjectId);
+        if (topApps.isEmpty()) {
+            log.warn("No top 3 apps found for subjectId: {}", subjectId);
             return ResponseEntity.notFound().build();
         }
 
-
-        return ResponseEntity.ok(stats);
+        return ResponseEntity.ok(topApps);
     }
 
     /**

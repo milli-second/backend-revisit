@@ -203,7 +203,7 @@ public class AppUsageTracker {
         redisTemplate.opsForHash().increment(dailyKey, "app:" + packageName + ":" + rawData.getName(), usageMinutes);
 
         // 6. 실시간 메트릭 (24시간 슬라이딩 윈도우)
-        aggregateRealtimeMetrics(realtimeKey, packageName, startTime, usageMinutes, categoryId);
+        aggregateRealtimeMetrics(realtimeKey, packageName, rawData.getName(), startTime, usageMinutes, categoryId);
 
         // TTL 설정 (48시간 후 자동 삭제)
         redisTemplate.expire(dailyKey, 48, TimeUnit.HOURS);
@@ -234,7 +234,7 @@ public class AppUsageTracker {
     /**
      * 실시간 메트릭 집계 (현재 시간 기준 24시간)
      */
-    private void aggregateRealtimeMetrics(String realtimeKey, String packageName,
+    private void aggregateRealtimeMetrics(String realtimeKey, String packageName, String appName,
                                            Instant timestamp, int usageMinutes, int categoryId) {
         // 24시간 이전 데이터는 실시간 메트릭에 추가하지 않음 (불필요한 연산 방지)
         long twentyFourHoursAgo = Instant.now().minusSeconds(24 * 60 * 60).toEpochMilli();
@@ -245,7 +245,7 @@ public class AppUsageTracker {
 
         // Sorted Set에 앱 사용 기록 저장 (timestamp를 score로 사용)
         String eventsKey = realtimeKey + ":events";
-        String member = packageName + ":" + categoryId + ":" + usageMinutes;
+        String member = packageName + ":" + appName + ":" + categoryId + ":" + usageMinutes;
         redisTemplate.opsForZSet().add(eventsKey, member, (double) timestamp.toEpochMilli());
 
         // 24시간 이전 데이터 삭제 (안전장치)
@@ -272,19 +272,22 @@ public class AppUsageTracker {
         }
 
         Map<String, Integer> appUsage = new HashMap<>();
+        Map<String, String> packageToAppName = new HashMap<>();
         Map<Integer, Integer> categoryUsage = new HashMap<>();
         int totalMinutes = 0;
 
         // 이벤트 분석
         for (Object event : events) {
             String[] parts = event.toString().split(":");
-            if (parts.length < 3) continue;
+            if (parts.length < 4) continue;
 
             String packageName = parts[0];
-            int categoryId = Integer.parseInt(parts[1]);
-            int minutes = Integer.parseInt(parts[2]);
+            String appName = parts[1];
+            int categoryId = Integer.parseInt(parts[2]);
+            int minutes = Integer.parseInt(parts[3]);
 
             appUsage.merge(packageName, minutes, Integer::sum);
+            packageToAppName.put(packageName, appName);
             categoryUsage.merge(categoryId, minutes, Integer::sum);
             totalMinutes += minutes;
         }
@@ -300,7 +303,10 @@ public class AppUsageTracker {
 
         for (int i = 0; i < topApps.size(); i++) {
             Map.Entry<String, Integer> entry = topApps.get(i);
-            redisTemplate.opsForHash().put(statsKey, "top_app_" + (i + 1), entry.getKey());
+            String packageName = entry.getKey();
+            String appName = packageToAppName.get(packageName);
+            redisTemplate.opsForHash().put(statsKey, "top_app_" + (i + 1) + "_package_name", packageName);
+            redisTemplate.opsForHash().put(statsKey, "top_app_" + (i + 1) + "_app_name", appName);
             redisTemplate.opsForHash().put(statsKey, "top_app_" + (i + 1) + "_minutes", entry.getValue());
         }
 
@@ -533,7 +539,7 @@ public class AppUsageTracker {
         redisTemplate.opsForHash().increment(dailyKey, "app:" + packageName + ":" + rawData.getName(), usageMinutes);
 
         // 6. 실시간 메트릭 (24시간 슬라이딩 윈도우)
-        aggregateRealtimeMetrics(realtimeKey, packageName, startTime, usageMinutes, categoryId);
+        aggregateRealtimeMetrics(realtimeKey, packageName, rawData.getName(), startTime, usageMinutes, categoryId);
 
         // TTL 설정 (48시간 후 자동 삭제)
         redisTemplate.expire(dailyKey, 48, TimeUnit.HOURS);
