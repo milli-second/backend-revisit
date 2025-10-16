@@ -1,0 +1,11 @@
+### 사용자 회원가입 요청
+POST http://localhost:8088/users/signup
+Content-Type: application/json
+
+{
+  "nickname": "kimjinjuind1",
+  "password": "eoqkr111!!!",
+  "profileImageNumber": 2
+}
+
+
