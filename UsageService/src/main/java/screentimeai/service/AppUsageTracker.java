@@ -352,6 +352,22 @@ public class AppUsageTracker {
         return redisTemplate.opsForHash().entries(statsKey);
     }
 
+    public List<screentimeai.dto.TopApp> getTop3Apps(UUID subjectId) {
+        String statsKey = buildRealtimeKey(subjectId) + ":stats";
+        Map<Object, Object> stats = redisTemplate.opsForHash().entries(statsKey);
+
+        List<screentimeai.dto.TopApp> topApps = new ArrayList<>();
+        for (int i = 1; i <= 3; i++) {
+            String packageName = (String) stats.get("top_app_" + i + "_package_name");
+            if (packageName != null) {
+                String appName = (String) stats.get("top_app_" + i + "_app_name");
+                int minutes = Integer.parseInt(stats.get("top_app_" + i + "_minutes").toString());
+                topApps.add(new screentimeai.dto.TopApp(i, appName, packageName, minutes));
+            }
+        }
+        return topApps;
+    }
+
     /**
      * 24시간 카테고리 사용 비율 조회 (상위 4개 + 기타)
      */

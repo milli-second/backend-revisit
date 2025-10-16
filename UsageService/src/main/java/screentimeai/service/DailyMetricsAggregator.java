@@ -100,6 +100,10 @@ public class DailyMetricsAggregator {
         return appUsageTracker.getCategoryUsage(subjectId);
     }
 
+    public List<screentimeai.dto.TopApp> getTop3Apps(UUID subjectId) {
+        return appUsageTracker.getTop3Apps(subjectId);
+    }
+
     public screentimeai.dto.ThreeDayUsageResponse getThreeDayUsage(UUID subjectId) {
         screentimeai.dto.TodayUsageSummary todaySummary = appUsageTracker.getTodayUsage(subjectId);
 

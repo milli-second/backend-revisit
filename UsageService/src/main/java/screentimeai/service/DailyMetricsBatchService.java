@@ -21,8 +21,7 @@ public class DailyMetricsBatchService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final DailyUserMetricsRepository metricsRepository;
     private final DailyCategoryUsageRepository categoryUsageRepository;
-    private final DailyTopAppsRepository topAppsRepository;
-    private final CategoryMappingService categoryMappingService;
+
     private final AppUsageTracker appUsageTracker;
 
     private static final String REDIS_KEY_PREFIX = "daily_metrics:";
@@ -39,7 +38,7 @@ public class DailyMetricsBatchService {
             String pattern = "foreground_app:*";
             Set<String> keys = redisTemplate.keys(pattern);
 
-            if (keys == null || keys.isEmpty()) {
+            if (keys.isEmpty()) {
                 log.info("No active sessions found");
                 return;
             }
@@ -93,7 +92,7 @@ public class DailyMetricsBatchService {
         // Redis에서 어제 날짜의 모든 키 조회
         Set<String> keys = redisTemplate.keys(keyPattern);
 
-        if (keys == null || keys.isEmpty()) {
+        if ( keys.isEmpty()) {
             log.info("No metrics found for yesterday: {}", yesterday);
             return;
         }
@@ -115,12 +114,6 @@ public class DailyMetricsBatchService {
                 List<DailyCategoryUsage> categoryUsages = extractCategoryUsages(subjectId, yesterday, redisData);
                 if (!categoryUsages.isEmpty()) {
                     categoryUsageRepository.saveAll(categoryUsages);
-                }
-
-                // 3. DailyTopApps 저장
-                List<DailyTopApps> topApps = extractTopApps(subjectId, yesterday, redisData);
-                if (!topApps.isEmpty()) {
-                    topAppsRepository.saveAll(topApps);
                 }
 
                 // Redis 데이터 삭제
@@ -190,41 +183,7 @@ public class DailyMetricsBatchService {
     /**
      * Redis 데이터에서 Top 3 앱 추출
      */
-    private List<DailyTopApps> extractTopApps(UUID subjectId, LocalDate date,
-                                                Map<Object, Object> redisData) {
-        // "app:" prefix로 시작하는 키들을 필터링하여 앱별 사용시간 추출
-        Map<String, Integer> appUsageMap = new HashMap<>();
 
-        for (Map.Entry<Object, Object> entry : redisData.entrySet()) {
-            String key = entry.getKey().toString();
-            if (key.startsWith("app:")) {
-                String packageName = key.substring(4); // "app:" 제거
-                int usageMinutes = Integer.parseInt(entry.getValue().toString());
-                appUsageMap.put(packageName, usageMinutes);
-            }
-        }
-
-        // 사용시간 기준으로 정렬하여 Top 3 추출
-        List<Map.Entry<String, Integer>> sortedApps = appUsageMap.entrySet().stream()
-                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-                .limit(3)
-                .collect(Collectors.toList());
-
-        List<DailyTopApps> topApps = new ArrayList<>();
-        for (int i = 0; i < sortedApps.size(); i++) {
-            Map.Entry<String, Integer> entry = sortedApps.get(i);
-            DailyTopApps topApp = DailyTopApps.builder()
-                    .subjectId(subjectId)
-                    .summaryDate(date)
-                    .appRank(i + 1)
-                    .packageName(entry.getKey())
-                    .usageMinutes(entry.getValue())
-                    .build();
-            topApps.add(topApp);
-        }
-
-        return topApps;
-    }
 
     private int getIntValue(Map<Object, Object> data, String key) {
         Object value = data.get(key);
@@ -302,11 +261,8 @@ public class DailyMetricsBatchService {
      * 특정 날짜의 과거 데이터를 집계하여 DB에 저장
      */
     private void processHistoricalDataForDate(UUID subjectId, LocalDate date, List<RawData> dailyData) {
-        // 임시 Redis 키 생성 (기존 데이터와 충돌 방지)
-        String tempRedisKey = REDIS_KEY_PREFIX + "temp:" + subjectId + ":" + date + ":" + UUID.randomUUID();
 
         try {
-            // 1. 임시 Redis 키에 집계 (AppUsageTracker 로직 재사용)
             for (RawData rawData : dailyData) {
                 // AppUsageTracker는 자동으로 올바른 날짜 키에 집계하므로,
                 // 여기서는 직접 집계 로직을 호출
@@ -363,11 +319,7 @@ public class DailyMetricsBatchService {
             mergeCategoryUsages(subjectId, date, categoryUsages);
         }
 
-        // 3. DailyTopApps 재계산 저장 (Top 3는 기존 데이터와 합산 후 재정렬)
-        List<DailyTopApps> topApps = extractTopApps(subjectId, date, redisData);
-        if (!topApps.isEmpty()) {
-            mergeTopApps(subjectId, date, topApps);
-        }
+
     }
 
     /**
@@ -445,50 +397,7 @@ public class DailyMetricsBatchService {
         }
     }
 
-    /**
-     * Top 앱 병합 (기존 데이터와 합산 후 Top 3 재계산)
-     */
-    private void mergeTopApps(UUID subjectId, LocalDate date, List<DailyTopApps> newTopApps) {
-        // 기존 Top 앱 조회
-        List<DailyTopApps> existingTopApps = topAppsRepository
-                .findBySubjectIdAndSummaryDate(subjectId, date);
 
-        // 앱별 사용시간을 Map으로 통합
-        Map<String, Integer> appUsageMap = new HashMap<>();
-
-        for (DailyTopApps existing : existingTopApps) {
-            appUsageMap.put(existing.getPackageName(), existing.getUsageMinutes());
-        }
-
-        for (DailyTopApps newApp : newTopApps) {
-            appUsageMap.merge(newApp.getPackageName(), newApp.getUsageMinutes(), Integer::sum);
-        }
-
-        // Top 3 재계산
-        List<Map.Entry<String, Integer>> sortedApps = appUsageMap.entrySet().stream()
-                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-                .limit(3)
-                .collect(Collectors.toList());
-
-        // 기존 데이터 삭제 후 재저장
-        topAppsRepository.deleteBySubjectIdAndSummaryDate(subjectId, date);
-
-        List<DailyTopApps> mergedTopApps = new ArrayList<>();
-        for (int i = 0; i < sortedApps.size(); i++) {
-            Map.Entry<String, Integer> entry = sortedApps.get(i);
-            DailyTopApps topApp = DailyTopApps.builder()
-                    .subjectId(subjectId)
-                    .summaryDate(date)
-                    .appRank(i + 1)
-                    .packageName(entry.getKey())
-                    .usageMinutes(entry.getValue())
-                    .build();
-            mergedTopApps.add(topApp);
-        }
-
-        topAppsRepository.saveAll(mergedTopApps);
-        log.debug("Merged top apps: {} total apps, top 3 saved", appUsageMap.size());
-    }
 
     /**
      * 병합 시 카테고리 비율 계산

@@ -101,15 +101,3 @@ CREATE TABLE IF NOT EXISTS daily_category_usage (
 CREATE INDEX IF NOT EXISTS idx_daily_category_date ON daily_category_usage(summary_date);
 CREATE INDEX IF NOT EXISTS idx_daily_category_subject ON daily_category_usage(subject_id);
 
--- Daily Top Apps 테이블 생성
-CREATE TABLE IF NOT EXISTS daily_top_apps (
-    subject_id UUID NOT NULL,
-    summary_date DATE NOT NULL,
-    app_rank INTEGER NOT NULL,
-    package_name TEXT NOT NULL,
-    usage_minutes INTEGER,
-    PRIMARY KEY (subject_id, summary_date, app_rank)
-);
-
-CREATE INDEX IF NOT EXISTS idx_daily_top_apps_date ON daily_top_apps(summary_date);
-CREATE INDEX IF NOT EXISTS idx_daily_top_apps_subject ON daily_top_apps(subject_id);
