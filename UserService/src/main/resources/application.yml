@@ -2,12 +2,6 @@ spring:
   application:
     name: userservice
 
-  data:
-    redis:
-      host: localhost
-      port: 6379
-      database: 0   # userService 인증용 Redis DB index
-
   datasource:
     url: jdbc:postgresql://localhost:5432/userservice
     driver-class-name: org.postgresql.Driver
@@ -86,11 +80,6 @@ spring:
   config:
     activate:
       on-profile: docker
-
-  data:
-    redis:
-      host: redis
-      port: 6379
 
   datasource:
     url: jdbc:postgresql://userservice-db:5432/userservice

@@ -7,7 +7,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
@@ -17,12 +16,9 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-    private final RedisTemplate<String, String> authRedisTemplate;
 
-    public JwtAuthenticationFilter(JwtUtil jwtUtil,
-                                   RedisTemplate<String, String> authRedisTemplate) {
+    public JwtAuthenticationFilter(JwtUtil jwtUtil) {
         this.jwtUtil = jwtUtil;
-        this.authRedisTemplate = authRedisTemplate;
     }
 
     @Override
@@ -48,26 +44,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = header.substring(7);
 
             try {
-                // ✅ 블랙리스트 확인
-                if (authRedisTemplate.hasKey("blacklist:" + token)) {
-                    setErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "로그아웃된 토큰입니다.");
-                    return;
-                }
-
                 // ✅ 토큰에서 username 추출
                 String username = jwtUtil.getUsernameFromToken(token);
 
-                // ✅ 토큰 유효성 검사 + Redis 저장된 토큰 일치 여부 확인
+                // ✅ 토큰 유효성 검사
                 if (jwtUtil.validateToken(token, username)) {
-                    String savedToken = authRedisTemplate.opsForValue().get("access:" + username);
-                    if (savedToken != null && savedToken.equals(token)) {
-                        UsernamePasswordAuthenticationToken authentication =
-                                new UsernamePasswordAuthenticationToken(username, null, null);
-                        SecurityContextHolder.getContext().setAuthentication(authentication);
-                    } else {
-                        setErrorResponse(response, HttpServletResponse.SC_FORBIDDEN, "Redis에 저장된 토큰과 일치하지 않습니다.");
-                        return;
-                    }
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(username, null, null);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
                 } else {
                     setErrorResponse(response, HttpServletResponse.SC_FORBIDDEN, "유효하지 않은 토큰입니다.");
                     return;

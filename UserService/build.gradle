@@ -27,7 +27,6 @@ dependencies {
     implementation 'io.micrometer:micrometer-tracing-bridge-brave'
     implementation 'org.springframework.cloud:spring-cloud-starter-stream-kafka'
     implementation 'org.springframework.cloud:spring-cloud-function-context'
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
 
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
