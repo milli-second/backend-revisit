@@ -1,0 +1,125 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: usageservice-config
+  namespace: screentimeai
+data:
+  SPRING_PROFILES_ACTIVE: "docker"
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://usageservice-postgres.db.svc.cluster.local:5432/usageservice_db"
+  SPRING_DATA_REDIS_HOST: "redis-0.redis.db.svc.cluster.local"
+  SPRING_DATA_REDIS_PORT: "6379"
+  SPRING_DATA_REDIS_DATABASE: "1"
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka.db.svc.cluster.local:9092"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: usageservice
+  namespace: screentimeai
+spec:
+  selector:
+    app: usageservice
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: usageservice
+  namespace: screentimeai
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: usageservice
+  template:
+    metadata:
+      labels:
+        app: usageservice
+    spec:
+      containers:
+      - name: usageservice
+        image: usageservice:latest
+        imagePullPolicy: IfNotPresent  # 로컬 이미지 사용
+        ports:
+        - containerPort: 8080
+          name: http
+        command: ["sh", "-c"]
+        args:
+          - >
+            java -Xmx400M
+            -Djava.security.egd=file:/dev/./urandom
+            -jar app.jar
+            --spring.profiles.active=docker
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          valueFrom:
+            configMapKeyRef:
+              name: usageservice-config
+              key: SPRING_PROFILES_ACTIVE
+        - name: SPRING_DATASOURCE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: usageservice-config
+              key: SPRING_DATASOURCE_URL
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: usageservice-db-secret
+              key: POSTGRES_USER
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: usageservice-db-secret
+              key: POSTGRES_PASSWORD
+        - name: SPRING_DATA_REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: usageservice-config
+              key: SPRING_DATA_REDIS_HOST
+        - name: SPRING_DATA_REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: usageservice-config
+              key: SPRING_DATA_REDIS_PORT
+        - name: SPRING_DATA_REDIS_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: usageservice-config
+              key: SPRING_DATA_REDIS_DATABASE
+        - name: SPRING_DATA_REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis-secret
+              key: REDIS_PASSWORD
+        - name: SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS
+          valueFrom:
+            configMapKeyRef:
+              name: usageservice-config
+              key: SPRING_KAFKA_BOOTSTRAP_SERVERS
+        resources:
+          requests:
+            memory: "384Mi"
+            cpu: "300m"
+          limits:
+            memory: "768Mi"
+            cpu: "700m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 90
+          periodSeconds: 15
+          timeoutSeconds: 10
+          failureThreshold: 6
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 10
