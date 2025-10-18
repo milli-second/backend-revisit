@@ -43,6 +43,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST,"/users/signup", "/users/login").permitAll() // 회원가입/로그인만 허용
                         .requestMatchers("/users/swagger-ui.html", "/users/swagger-ui/**", "/users/v3/api-docs", "/users/v3/api-docs/**").permitAll() // Swagger 허용
+                        .requestMatchers("/actuator/health").permitAll() // Health check 허용
                         .anyRequest().authenticated() // 나머지는 인증 필요
                 )
                 .sessionManagement(session ->

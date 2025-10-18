@@ -16,11 +16,20 @@ public class AuthRedisConfig {
     @Value("${spring.data.redis.port}")
     private int redisPort;
 
+    @Value("${spring.data.redis.password:}")
+    private String redisPassword;
+
     @Bean
     public LettuceConnectionFactory authRedisConnectionFactory() {
-        LettuceConnectionFactory factory = new LettuceConnectionFactory(redisHost, redisPort);
-        factory.setDatabase(0); // ✅ 인증용 Redis (DB 0) index 0임
-        return factory;
+        org.springframework.data.redis.connection.RedisStandaloneConfiguration config =
+            new org.springframework.data.redis.connection.RedisStandaloneConfiguration();
+        config.setHostName(redisHost);
+        config.setPort(redisPort);
+        config.setDatabase(0); // ✅ 인증용 Redis (DB 0) index 0임
+        if (redisPassword != null && !redisPassword.isEmpty()) {
+            config.setPassword(redisPassword);
+        }
+        return new LettuceConnectionFactory(config);
     }
 
     @Bean(name = "authRedisTemplate")

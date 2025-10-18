@@ -7,6 +7,7 @@ spring:
       host: localhost
       port: 6379
       database: 0   # userService 인증용 Redis DB index
+      password: ${SPRING_DATA_REDIS_PASSWORD:}
 
   datasource:
     url: jdbc:postgresql://localhost:5432/userservice
@@ -28,12 +29,13 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-
     consumer:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       properties:
         spring.json.trusted.packages: "*"
+    properties:
+      security.protocol: PLAINTEXT
 
   cloud:
     stream:
@@ -89,14 +91,18 @@ spring:
 
   data:
     redis:
-      host: redis
-      port: 6379
+      host: ${SPRING_DATA_REDIS_HOST:redis.db.svc.cluster.local}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      database: ${SPRING_DATA_REDIS_DATABASE:0}
+      password: ${SPRING_DATA_REDIS_PASSWORD:}
 
   datasource:
-    url: jdbc:postgresql://userservice-db:5432/userservice
+    url: jdbc:postgresql://${POSTGRES_HOST:userservice-postgres.db.svc.cluster.local}:5432/userservice
 
   kafka:
-    bootstrap-servers: my-kafka:9092
+    bootstrap-servers: kafka-0.kafka.db.svc.cluster.local:9092
+    properties:
+      security.protocol: PLAINTEXT
 
 server:
   port: 8080

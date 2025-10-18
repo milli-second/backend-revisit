@@ -40,7 +40,9 @@ services:
     container_name: redis
     ports:
       - "6379:6379"
-    command: redis-server --appendonly yes
+    command: redis-server --appendonly yes --requirepass redis_password_change_in_prod
+    environment:
+      - REDIS_PASSWORD=redis_password_change_in_prod
     volumes:
       - redis_data:/data
     healthcheck:
@@ -88,10 +90,14 @@ services:
 
   gateway:
     depends_on:
-      - kafka
-      - redis
-      - userservice
-      - usageservice
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      userservice:
+        condition: service_started
+      usageservice:
+        condition: service_started
     build:
       context: ./gateway
       dockerfile: Dockerfile
@@ -113,6 +119,9 @@ services:
       dockerfile: Dockerfile
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATA_REDIS_PASSWORD=redis_password_change_in_prod
+      - REDIS_HOST=redis
+      - POSTGRES_HOST=userservice-db
     ports:
       - "8081:8080"
       
@@ -137,6 +146,8 @@ services:
       dockerfile: Dockerfile
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - REDIS_HOST=redis
+      - POSTGRES_HOST=usageservice-db
     ports:
       - "8082:8080"
 

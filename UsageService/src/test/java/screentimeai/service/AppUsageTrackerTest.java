@@ -10,11 +10,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
-import screentimeai.domain.RawData;
+import screentimeai.application.AppUsageTracker;
+import screentimeai.application.CategoryMappingService;
+import screentimeai.domain.entity.RawData;
+
 
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 

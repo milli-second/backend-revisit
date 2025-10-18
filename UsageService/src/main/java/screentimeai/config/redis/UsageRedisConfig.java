@@ -21,12 +21,18 @@ public class UsageRedisConfig {
     @Value("${spring.data.redis.database:1}")
     private int redisDb;
 
+    @Value("${spring.data.redis.password:}")
+    private String redisPassword;
+
     @Bean
     public LettuceConnectionFactory usageRedisConnectionFactory() {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
         config.setHostName(redisHost); // ✅ 환경변수에서 주입
         config.setPort(redisPort);
         config.setDatabase(redisDb);
+        if (redisPassword != null && !redisPassword.isEmpty()) {
+            config.setPassword(redisPassword);
+        }
         return new LettuceConnectionFactory(config);
     }
 
