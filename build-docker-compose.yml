@@ -40,9 +40,7 @@ services:
     container_name: redis
     ports:
       - "6379:6379"
-    command: redis-server --appendonly yes --requirepass redis_password_change_in_prod
-    environment:
-      - REDIS_PASSWORD=redis_password_change_in_prod
+    command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
     healthcheck:
@@ -119,7 +117,6 @@ services:
       dockerfile: Dockerfile
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_DATA_REDIS_PASSWORD=redis_password_change_in_prod
       - REDIS_HOST=redis
       - POSTGRES_HOST=userservice-db
     ports:
