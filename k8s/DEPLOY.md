@@ -12,8 +12,6 @@
 
 ```bash
 # 프로젝트 루트에서
-cd /Users/layla/IdeaProjects/backend
-
 # 모든 서비스 빌드 (5~10분 소요)
 ./build-images.sh
 
