@@ -82,7 +82,7 @@ spec:
       name: postgres-data
     spec:
       accessModes: [ "ReadWriteOnce" ]
-      storageClassName: local-path
+      storageClassName: ktc-nfs-client
       resources:
         requests:
           storage: 5Gi
