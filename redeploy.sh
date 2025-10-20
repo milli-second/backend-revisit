@@ -27,7 +27,7 @@ sudo kubectl apply -f k8s/secrets/
 
 # 4. DB 배포
 echo "4. DB 배포..."
-sudo kubectl apply -f k8s/databases-simple/
+sudo kubectl apply -f k8s/databases/
 
 echo "   DB 준비 대기 중..."
 sleep 60
