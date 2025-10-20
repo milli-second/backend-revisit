@@ -1,5 +1,5 @@
 ### 사용자 회원가입 요청
-POST http://localhost:8088/users/signup
+POST http://localhost:8081/users/signup
 Content-Type: application/json
 
 {
@@ -9,11 +9,11 @@ Content-Type: application/json
 }
 
 ### 사용자 로그인
-POST http://localhost:8088/users/login
+POST http://localhost:8081/users/login
 Content-Type: application/json
 
 {
-  "nickname": "kimjinjuind4",
+  "nickname": "kimjinjuind1",
   "password": "eoqkr111!!!"
 }
 

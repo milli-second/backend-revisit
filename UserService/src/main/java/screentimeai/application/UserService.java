@@ -40,7 +40,7 @@ public class UserService {
         user.login(rawPassword, passwordEncoder);
 
         // ✅ JWT 생성
-        String token = jwtUtil.generateToken(user.getNickname());
+        String token = jwtUtil.generateToken(user.getNickname(), user.getUuid());
 
         userRepository.save(user); // 👉 이벤트 발행을 트리거
         System.out.println("✅ User login completed: " + nickname);
