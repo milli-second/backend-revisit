@@ -19,7 +19,7 @@ COPY . ./UserService/
 RUN gradle :UserService:build -x test --no-daemon
 
 # 2. 실행 환경: 빌드된 JAR 파일을 실행합니다.
-FROM eclipse-temurin:21-jre-jammy
+FROM --platform=linux/amd64 eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
 # 빌드 환경에서 생성된 JAR 파일을 실행 환경으로 복사합니다.

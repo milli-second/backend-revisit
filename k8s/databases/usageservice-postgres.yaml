@@ -82,7 +82,7 @@ spec:
       name: postgres-data
     spec:
       accessModes: [ "ReadWriteOnce" ]
+      storageClassName: ktc-nfs-client
       resources:
         requests:
-          storage: 10Gi  # 리소스 제한에 맞춰 축소
-      # storageClassName: standard
+          storage: 10Gi

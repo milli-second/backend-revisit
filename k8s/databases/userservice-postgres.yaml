@@ -82,7 +82,7 @@ spec:
       name: postgres-data
     spec:
       accessModes: [ "ReadWriteOnce" ]
+      storageClassName: ktc-nfs-client
       resources:
         requests:
           storage: 5Gi
-      # storageClassName: standard  # 클러스터에 맞게 변경

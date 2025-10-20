@@ -5,11 +5,11 @@ metadata:
   namespace: screentimeai
 data:
   SPRING_PROFILES_ACTIVE: "docker"
-  SPRING_DATASOURCE_URL: "jdbc:postgresql://userservice-postgres.db.svc.cluster.local:5432/userservice_db"
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://userservice-postgres-0.userservice-postgres.db.svc.cluster.local:5432/userservice_db"
   SPRING_DATA_REDIS_HOST: "redis-0.redis.db.svc.cluster.local"
   SPRING_DATA_REDIS_PORT: "6379"
   SPRING_DATA_REDIS_DATABASE: "0"
-  SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka.db.svc.cluster.local:9092"
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka-0.kafka.db.svc.cluster.local:9092"
 ---
 apiVersion: v1
 kind: Service
@@ -42,8 +42,8 @@ spec:
     spec:
       containers:
       - name: userservice
-        image: userservice:latest
-        imagePullPolicy: IfNotPresent  # 로컬 이미지 사용
+        image: laylaoh/userservice:latest-amd64
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
           name: http

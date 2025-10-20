@@ -1,18 +1,33 @@
 package screentimeai.config;
+
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.servers.Server;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Configuration
 public class SwaggerConfig {
-    
+
+    @Value("${springdoc.swagger-ui.server-url:}")
+    private String swaggerServerUrl;
+
     @Bean
     public OpenAPI usageServiceAPI() {
+        // 서버 URL 설정 - 환경 변수로 설정 가능하도록 함
+        List<Server> servers = new ArrayList<>();
+        if (swaggerServerUrl != null && !swaggerServerUrl.isEmpty()) {
+            servers.add(new Server().url(swaggerServerUrl).description("API Gateway"));
+        } else {
+            // 기본값: 상대 경로 사용 (현재 브라우저에서 접속한 호스트 기준)
+            servers.add(new Server().url("/").description("Current Host"));
+        }
+
         return new OpenAPI()
                 .info(new Info()
                         .title("Usage Service API")
@@ -32,10 +47,6 @@ public class SwaggerConfig {
                         .contact(new Contact()
                                 .name("Screen Time AI Team")
                                 .email("crispylemon7120@gmail.com")))
-                .servers(List.of(
-                        new Server()
-                                .url("http://localhost:8088")
-                                .description("Gateway Server")
-                ));
+                .servers(servers);
     }
 }
