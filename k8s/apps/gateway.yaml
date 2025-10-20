@@ -40,8 +40,8 @@ spec:
     spec:
       containers:
       - name: gateway
-        image: gateway:latest
-        imagePullPolicy: IfNotPresent  # 로컬 이미지 사용
+        image: laylaoh/gateway:latest-amd64
+        imagePullPolicy: Always
         ports:
         - containerPort: 8088
           name: http

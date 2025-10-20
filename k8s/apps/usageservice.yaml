@@ -5,11 +5,11 @@ metadata:
   namespace: screentimeai
 data:
   SPRING_PROFILES_ACTIVE: "docker"
-  SPRING_DATASOURCE_URL: "jdbc:postgresql://usageservice-postgres.db.svc.cluster.local:5432/usageservice_db"
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://usageservice-postgres-0.usageservice-postgres.db.svc.cluster.local:5432/usageservice_db"
   SPRING_DATA_REDIS_HOST: "redis-0.redis.db.svc.cluster.local"
   SPRING_DATA_REDIS_PORT: "6379"
   SPRING_DATA_REDIS_DATABASE: "1"
-  SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka.db.svc.cluster.local:9092"
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka-0.kafka.db.svc.cluster.local:9092"
 ---
 apiVersion: v1
 kind: Service
@@ -42,18 +42,11 @@ spec:
     spec:
       containers:
       - name: usageservice
-        image: usageservice:latest
-        imagePullPolicy: IfNotPresent  # 로컬 이미지 사용
+        image: laylaoh/usageservice:latest-amd64
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
           name: http
-        command: ["sh", "-c"]
-        args:
-          - >
-            java -Xmx400M
-            -Djava.security.egd=file:/dev/./urandom
-            -jar app.jar
-            --spring.profiles.active=docker
         env:
         - name: SPRING_PROFILES_ACTIVE
           valueFrom:
