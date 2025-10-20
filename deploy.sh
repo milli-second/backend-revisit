@@ -37,6 +37,12 @@ echo -e "${GREEN}✓ 이미지 푸시 완료${NC}"
 # 2. K8s YAML 파일 업데이트
 echo -e "${YELLOW}[2/4] K8s YAML 업데이트...${NC}"
 ./update-k8s-images.sh $DOCKER_USERNAME
+
+echo -e "${YELLOW}[2.5/4] Swagger 서버 주소 업데이트...${NC}"
+sed -i.bak "s|__SERVER_IP__|$SERVER_IP|g" k8s/apps/userservice.yaml
+sed -i.bak "s|__SERVER_IP__|$SERVER_IP|g" k8s/apps/usageservice.yaml
+rm -f k8s/apps/*.bak
+
 echo -e "${GREEN}✓ YAML 업데이트 완료${NC}"
 
 # 3. 파일 전송

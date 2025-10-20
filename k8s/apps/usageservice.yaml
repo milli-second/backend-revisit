@@ -10,6 +10,7 @@ data:
   SPRING_DATA_REDIS_PORT: "6379"
   SPRING_DATA_REDIS_DATABASE: "1"
   SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka-0.kafka.db.svc.cluster.local:9092"
+  SPRINGDOC_SWAGGER_UI_SERVER_URL: "http://__SERVER_IP__:30088"
 ---
 apiVersion: v1
 kind: Service
@@ -93,6 +94,11 @@ spec:
             configMapKeyRef:
               name: usageservice-config
               key: SPRING_KAFKA_BOOTSTRAP_SERVERS
+        - name: SPRINGDOC_SWAGGER_UI_SERVER_URL
+          valueFrom:
+            configMapKeyRef:
+              name: usageservice-config
+              key: SPRINGDOC_SWAGGER_UI_SERVER_URL
         resources:
           requests:
             memory: "384Mi"

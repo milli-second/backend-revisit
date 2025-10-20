@@ -43,7 +43,6 @@ spring:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
-    server-url: /
     urls:
       - name: User Service
         url: /users/v3/api-docs
