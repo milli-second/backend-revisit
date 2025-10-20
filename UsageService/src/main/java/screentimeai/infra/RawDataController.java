@@ -175,7 +175,6 @@ public class RawDataController {
             List<RawData> realtimeData = new ArrayList<>();
             List<RawData> historicalData = new ArrayList<>();
 
-
             for (RawData rawData : newDataList) {
                 int utcOffset = rawData.getUtcoffset() != null ? rawData.getUtcoffset() : 9;
                 java.time.LocalDate dataDate = getLocalDate(rawData.getTimestamp(), utcOffset);

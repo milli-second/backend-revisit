@@ -3,7 +3,7 @@
 POST http://localhost:8082/usage/raw-data
 Content-Type: application/json
 
-< ../scripts/daily_07a76922a3af962fd790fda624b7c9f1_2025/2025-10-16.json
+< ../scripts/daily_07a76922a3af962fd790fda624b7c9f1_2025/2025-10-17.json
 
 ### 특정 사용자의 RawData 저장 (가계정용)
 POST http://localhost:8082/usage/raw-data/test-account?subjectId=5341e294-5cbc-59bd-bf56-99535383bf22
