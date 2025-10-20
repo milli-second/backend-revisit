@@ -22,9 +22,10 @@ public class JwtUtil {
         System.out.println("✅ Loaded JWT Secret: " + secret);
     }
     // 토큰 생성
-    public String generateToken(String nickname) {
+    public String generateToken(String nickname, String uuid) {
         return Jwts.builder()
                 .setSubject(nickname) // subject = username
+                .claim("uuid", uuid)
                 .setIssuedAt(new Date(System.currentTimeMillis())) // 발급 시간
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // 10시간 유효
                 .signWith(SECRET_KEY)
@@ -34,6 +35,11 @@ public class JwtUtil {
     // 토큰에서 username 추출
     public String getUsernameFromToken(String token) {
         return getClaimFromToken(token, Claims::getSubject);
+    }
+
+    // 토큰에서 uuid 추출
+    public String getUuidFromToken(String token) {
+        return getClaimFromToken(token, claims -> claims.get("uuid", String.class));
     }
 
     // 토큰이 만료됐는지 확인
