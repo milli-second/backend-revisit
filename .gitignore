@@ -32,3 +32,4 @@ bin/
 ### Gradle ###
 .gradle/
 build/
+/UsageService/.claude/
