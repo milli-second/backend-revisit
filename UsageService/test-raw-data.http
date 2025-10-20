@@ -1,12 +1,30 @@
-### RawData 저장 테스트 (UUID 형식, 밀리초 timestamp)
-POST http://localhost:8088/usage/raw-data
+
+### RawData 저장 테스트 (UUID 형식, 밀리초 timestamp)-로컬
+POST http://localhost:8082/usage/raw-data
 Content-Type: application/json
 
 < ../scripts/daily_07a76922a3af962fd790fda624b7c9f1_2025/2025-10-16.json
 
+### 특정 사용자의 RawData 저장 (가계정용)
+POST http://localhost:8082/usage/raw-data/test-account?subjectId=5341e294-5cbc-59bd-bf56-99535383bf22
+
+### 특정 사용자의 RawData 조회 (가계정용)
+GET http://localhost:8082/usage/raw-data/by-subject/5341e294-5cbc-59bd-bf56-99535383bf22
+
+
+### RawData 저장 테스트 (UUID 형식, 밀리초 timestamp)
+POST http://localhost:8088/usage/raw-data
+Content-Type: application/json
+
+< ../scripts/daily_07a76922a3af962fd790fda624b7c9f1_2025/2025-10-19.json
+
 
 ### 특정 사용자의 RawData 조회 (테스트용)
 GET http://localhost:8088/usage/raw-data/5341e294-5cbc-59bd-bf56-99535383bf22
+
+### 특정 사용자의 RawData 조회 (가계정용)
+GET http://localhost:8088/usage/raw-data/test?subjectId=5341e294-5cbc-59bd-bf56-99535383bf22
+
 
 ### TOP3 사용량 앱 조회
 GET http://localhost:8088/usage/stats/top3/5341e294-5cbc-59bd-bf56-99535383bf22

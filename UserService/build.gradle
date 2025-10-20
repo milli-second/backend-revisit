@@ -49,6 +49,7 @@ dependencies {
     testImplementation 'io.cucumber:cucumber-junit-platform-engine:7.18.0'
     testImplementation 'io.cucumber:cucumber-spring:7.18.0'
     testImplementation 'org.springframework.kafka:spring-kafka-test'//카프카 테스트 용 추가
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
 
 }

@@ -79,10 +79,13 @@ public class DailyMetricsBatchService {
         }
     }
 
+
     /**
      * 매일 자정에 실행: Redis 데이터를 DB에 저장하고 Redis 삭제
      */
+
     @Scheduled(cron = "0 0 0 * * *")  // 매일 00:00:00
+    //@Scheduled(cron = "0 42 16 * * *")  // 오늘 14:25:00에 실행
     public void saveDailyMetricsToDB() {
         log.info("Starting daily metrics batch job...");
 
