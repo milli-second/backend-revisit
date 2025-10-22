@@ -18,7 +18,7 @@ spec:
     app: gateway
   ports:
     - port: 8088
-      targetPort: 8088
+      targetPort: 8080
       name: http
       nodePort: 30088  # 로컬에서 접근용
   type: NodePort
@@ -43,7 +43,7 @@ spec:
         image: laylaoh/gateway:latest-amd64
         imagePullPolicy: Always
         ports:
-        - containerPort: 8088
+        - containerPort: 8080
           name: http
         env:
         - name: USERSERVICE_URI
@@ -71,7 +71,7 @@ spec:
         livenessProbe:
           httpGet:
             path: /actuator/health
-            port: 8088
+            port: 8080
           initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 5
@@ -79,7 +79,7 @@ spec:
         readinessProbe:
           httpGet:
             path: /actuator/health
-            port: 8088
+            port: 8080
           initialDelaySeconds: 15
           periodSeconds: 5
           timeoutSeconds: 3
