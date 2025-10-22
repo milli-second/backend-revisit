@@ -10,7 +10,7 @@ data:
   SPRING_DATA_REDIS_PORT: "6379"
   SPRING_DATA_REDIS_DATABASE: "1"
   SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka-0.kafka.db.svc.cluster.local:9092"
-  SPRINGDOC_SWAGGER_UI_SERVER_URL: "http://__SERVER_IP__:30088"
+  SPRINGDOC_SWAGGER_UI_SERVER_URL: "https://api.yolang.shop"
 ---
 apiVersion: v1
 kind: Service
