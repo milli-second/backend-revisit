@@ -3,7 +3,7 @@ package screentimeai.infra;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 import screentimeai.application.AbstractEventPublisher;
-import screentimeai.domain.*;
+import screentimeai.domain.entity.*;
 
 @Component
 public class UserEventHandler {

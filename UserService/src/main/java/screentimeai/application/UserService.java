@@ -2,8 +2,9 @@ package screentimeai.application;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import screentimeai.domain.*;
 import screentimeai.config.security.JwtUtil;
+import screentimeai.domain.entity.User;
+import screentimeai.infra.repository.UserRepository;
 
 
 @Service

@@ -5,10 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import screentimeai.domain.entity.DailyUserMetrics;
 import screentimeai.domain.entity.RawData;
-import screentimeai.domain.repository.DailyUserMetricsRepository;
-import screentimeai.domain.repository.RawDataRepository;
-import screentimeai.infra.dto.CategoryUsageResponse;
-import screentimeai.infra.dto.DailyUsageResponse;
+import screentimeai.infra.repository.DailyUserMetricsRepository;
+import screentimeai.infra.repository.RawDataRepository;
+import screentimeai.presentation.dto.*;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -102,11 +101,11 @@ public class DailyMetricsAggregator {
         return appUsageTracker.getCategoryUsage(subjectId);
     }
 
-    public List<screentimeai.infra.dto.TopApp> getTop3Apps(UUID subjectId) {
+    public List<TopApp> getTop3Apps(UUID subjectId) {
         return appUsageTracker.getTop3Apps(subjectId);
     }
 
-    public screentimeai.infra.dto.ThreeDayUsageResponse getThreeDayUsage(UUID subjectId) {
+    public ThreeDayUsageResponse getThreeDayUsage(UUID subjectId) {
         // 사용자의 최근 raw_data에서 UTC offset 가져오기
         RawData latestRawData = rawDataRepository.findFirstBySubjectIdOrderByTimestampDesc(subjectId);
         int utcOffset = (latestRawData != null && latestRawData.getUtcoffset() != null)
@@ -114,7 +113,7 @@ public class DailyMetricsAggregator {
 
         log.info("Using UTC offset {} for subjectId: {}", utcOffset, subjectId);
 
-        screentimeai.infra.dto.TodayUsageSummary todaySummary = appUsageTracker.getTodayUsage(subjectId, utcOffset);
+        TodayUsageSummary todaySummary = appUsageTracker.getTodayUsage(subjectId, utcOffset);
 
         // UTC offset을 고려한 오늘 날짜 계산
         java.time.ZoneId zoneId = java.time.ZoneId.ofOffset("UTC", java.time.ZoneOffset.ofHours(utcOffset));
@@ -125,11 +124,11 @@ public class DailyMetricsAggregator {
         List<DailyUserMetrics> pastMetrics = dailyUserMetricsRepository
                 .findBySubjectIdAndSummaryDateBetweenOrderBySummaryDateDesc(subjectId, dayBeforeYesterday, yesterday);
 
-        List<screentimeai.infra.dto.DailyUsageSummary> dailySummaries = new java.util.ArrayList<>();
+        List<DailyUsageSummary> dailySummaries = new java.util.ArrayList<>();
         dailySummaries.add(todaySummary.getDailySummary());
 
         for (DailyUserMetrics metric : pastMetrics) {
-            dailySummaries.add(screentimeai.infra.dto.DailyUsageSummary.builder()
+            dailySummaries.add(DailyUsageSummary.builder()
                     .date(metric.getSummaryDate())
                     .dawnMinutes(metric.getDawnMinutes())
                     .morningMinutes(metric.getMorningMinutes())
@@ -138,9 +137,9 @@ public class DailyMetricsAggregator {
                     .build());
         }
 
-        dailySummaries.sort(java.util.Comparator.comparing(screentimeai.infra.dto.DailyUsageSummary::getDate).reversed());
+        dailySummaries.sort(java.util.Comparator.comparing(DailyUsageSummary::getDate).reversed());
 
-        return screentimeai.infra.dto.ThreeDayUsageResponse.builder()
+        return ThreeDayUsageResponse.builder()
                 .dailySummaries(dailySummaries)
                 .mostActiveHourStart(todaySummary.getMostActiveHourStart())
                 .build();
