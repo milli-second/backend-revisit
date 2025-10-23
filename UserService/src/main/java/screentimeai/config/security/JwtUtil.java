@@ -4,30 +4,53 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
-
 import org.springframework.stereotype.Component;
+import screentimeai.presentation.dto.TokenInfo;
 
+import java.security.Key;
 import java.util.Date;
 import java.util.function.Function;
-import java.security.Key;
 
 @Component
 public class JwtUtil {
 
-    //private final String SECRET_KEY = "mySecretKey"; //  환경변수나 yml로 빼는 게 보안상 좋음
     private final Key SECRET_KEY;
+    private static final long ACCESS_TOKEN_VALIDITY_MS = 30 * 60 * 1000; // 30분
+    private static final long REFRESH_TOKEN_VALIDITY_MS = 7 * 24 * 60 * 60 * 1000; // 7일
 
     public JwtUtil(@Value("${jwt.secret}") String secret) {
         this.SECRET_KEY = Keys.hmacShaKeyFor(secret.getBytes());
         System.out.println("✅ Loaded JWT Secret: " + secret);
     }
-    // 토큰 생성
-    public String generateToken(String nickname, String uuid) {
+
+    // Access Token과 Refresh Token을 모두 생성
+    public TokenInfo generateTokens(String nickname, String uuid) {
+        String accessToken = generateAccessToken(nickname, uuid);
+        String refreshToken = generateRefreshToken(nickname, uuid);
+
+        return TokenInfo.builder()
+                .grantType("Bearer")
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+    }
+
+    // Access Token 생성
+    public String generateAccessToken(String nickname, String uuid) {
+        return createToken(nickname, uuid, ACCESS_TOKEN_VALIDITY_MS);
+    }
+
+    // Refresh Token 생성
+    public String generateRefreshToken(String nickname, String uuid) {
+        return createToken(nickname, uuid, REFRESH_TOKEN_VALIDITY_MS);
+    }
+
+    private String createToken(String nickname, String uuid, long validityMs) {
         return Jwts.builder()
-                .setSubject(nickname) // subject = username
+                .setSubject(nickname)
                 .claim("uuid", uuid)
-                .setIssuedAt(new Date(System.currentTimeMillis())) // 발급 시간
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // 10시간 유효
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + validityMs))
                 .signWith(SECRET_KEY)
                 .compact();
     }
@@ -44,7 +67,12 @@ public class JwtUtil {
 
     // 토큰이 만료됐는지 확인
     public Boolean isTokenExpired(String token) {
-        return getExpirationDateFromToken(token).before(new Date());
+        try {
+            return getExpirationDateFromToken(token).before(new Date());
+        } catch (Exception e) {
+            // 만료되거나 서명이 잘못된 토큰 등 파싱 실패 시 true 반환
+            return true;
+        }
     }
 
     // 유효성 검증
