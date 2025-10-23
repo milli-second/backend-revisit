@@ -12,8 +12,8 @@ import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 
 import screentimeai.domain.entity.DailyUserMetrics;
-import screentimeai.domain.repository.DailyCategoryUsageRepository;
-import screentimeai.domain.repository.DailyUserMetricsRepository;
+import screentimeai.infra.repository.DailyCategoryUsageRepository;
+import screentimeai.infra.repository.DailyUserMetricsRepository;
 import screentimeai.domain.entity.DailyCategoryUsage;
 import screentimeai.application.DailyMetricsBatchService;
 

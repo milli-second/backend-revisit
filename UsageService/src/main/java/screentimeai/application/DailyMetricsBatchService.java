@@ -6,7 +6,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import screentimeai.domain.entity.*;
-import screentimeai.domain.repository.*;
+import screentimeai.infra.repository.DailyCategoryUsageRepository;
+import screentimeai.infra.repository.DailyUserMetricsRepository;
 
 import java.time.LocalDate;
 import java.time.ZoneId;

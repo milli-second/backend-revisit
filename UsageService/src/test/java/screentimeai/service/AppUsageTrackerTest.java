@@ -15,6 +15,8 @@ import org.springframework.data.redis.core.ZSetOperations;
 import screentimeai.domain.entity.RawData;
 import screentimeai.application.AppUsageTracker;
 import screentimeai.application.CategoryMappingService;
+import screentimeai.presentation.dto.DailyUsageSummary;
+import screentimeai.presentation.dto.TodayUsageSummary;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -228,11 +230,11 @@ class AppUsageTrackerTest {
         when(hashOperations.entries(dailyKey)).thenReturn(dailyMetrics);
 
         // When
-        screentimeai.infra.dto.TodayUsageSummary todayUsage = appUsageTracker.getTodayUsage(testSubjectId, 9);
+        TodayUsageSummary todayUsage = appUsageTracker.getTodayUsage(testSubjectId, 9);
 
         // Then
         assertNotNull(todayUsage);
-        screentimeai.infra.dto.DailyUsageSummary summary = todayUsage.getDailySummary();
+        DailyUsageSummary summary = todayUsage.getDailySummary();
         assertNotNull(summary);
 
         assertEquals(today, summary.getDate());

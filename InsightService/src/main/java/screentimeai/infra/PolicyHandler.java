@@ -5,9 +5,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 import screentimeai.config.kafka.KafkaProcessor;
-import screentimeai.domain.Insight;
-import screentimeai.domain.DailyAnalysisDataPrepared;
-import screentimeai.domain.InsightRepository;
+import screentimeai.domain.entity.Insight;
+import screentimeai.domain.entity.DailyAnalysisDataPrepared;
+import screentimeai.infra.repository.InsightRepository;
 import org.springframework.cloud.stream.annotation.StreamListener;
 
 //<<< Clean Arch / Inbound Adaptor

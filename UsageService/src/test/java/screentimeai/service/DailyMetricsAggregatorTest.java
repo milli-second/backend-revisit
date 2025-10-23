@@ -12,9 +12,9 @@ import screentimeai.application.AppUsageTracker;
 import screentimeai.application.DailyMetricsAggregator;
 import screentimeai.domain.entity.DailyUserMetrics;
 import screentimeai.domain.entity.RawData;
-import screentimeai.domain.repository.DailyUserMetricsRepository;
-import screentimeai.domain.repository.RawDataRepository;
-import screentimeai.infra.dto.*;
+import screentimeai.infra.repository.DailyUserMetricsRepository;
+import screentimeai.infra.repository.RawDataRepository;
+import screentimeai.presentation.dto.*;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -23,7 +23,6 @@ import java.util.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)

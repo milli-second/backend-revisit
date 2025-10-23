@@ -5,7 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import screentimeai.domain.entity.RawData;
-import screentimeai.infra.dto.CategoryUsageResponse;
+import screentimeai.presentation.dto.CategoryUsageResponse;
+import screentimeai.presentation.dto.DailyUsageSummary;
+import screentimeai.presentation.dto.TodayUsageSummary;
+import screentimeai.presentation.dto.TopApp;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -358,7 +361,7 @@ public class AppUsageTracker {
         return redisTemplate.opsForHash().entries(statsKey);
     }
 
-    public List<screentimeai.infra.dto.TopApp> getTop3Apps(UUID subjectId) {
+    public List<TopApp> getTop3Apps(UUID subjectId) {
         String eventsKey = buildRealtimeKey(subjectId) + ":events";
 
         long twentyFourHoursAgo = Instant.now().minusSeconds(24 * 60 * 60).toEpochMilli();
@@ -392,12 +395,12 @@ public class AppUsageTracker {
                 .limit(3)
                 .toList();
 
-        List<screentimeai.infra.dto.TopApp> topApps = new ArrayList<>();
+        List<TopApp> topApps = new ArrayList<>();
         for (int i = 0; i < sortedApps.size(); i++) {
             Map.Entry<String, Integer> entry = sortedApps.get(i);
             String packageName = entry.getKey();
             String appName = packageToAppName.get(packageName);
-            topApps.add(new screentimeai.infra.dto.TopApp(i + 1, appName, packageName, entry.getValue()));
+            topApps.add(new TopApp(i + 1, appName, packageName, entry.getValue()));
         }
 
         log.debug("Top 3 apps calculated for subjectId={}: {} apps found", subjectId, topApps.size());
@@ -635,7 +638,7 @@ public class AppUsageTracker {
         }
     }
 
-    public screentimeai.infra.dto.TodayUsageSummary getTodayUsage(UUID subjectId, int utcOffset) {
+    public TodayUsageSummary getTodayUsage(UUID subjectId, int utcOffset) {
         LocalDate today = getLocalDate(Instant.now(), utcOffset);
         String dailyKey = buildDailyKey(subjectId, today);
         Map<Object, Object> dailyMetrics = redisTemplate.opsForHash().entries(dailyKey);
@@ -662,7 +665,7 @@ public class AppUsageTracker {
             }
         }
 
-        screentimeai.infra.dto.DailyUsageSummary dailySummary = screentimeai.infra.dto.DailyUsageSummary.builder()
+        DailyUsageSummary dailySummary = DailyUsageSummary.builder()
                 .date(today)
                 .dawnMinutes(dawnMinutes)
                 .morningMinutes(morningMinutes)
@@ -670,7 +673,7 @@ public class AppUsageTracker {
                 .eveningMinutes(eveningMinutes)
                 .build();
 
-        return screentimeai.infra.dto.TodayUsageSummary.builder()
+        return TodayUsageSummary.builder()
                 .dailySummary(dailySummary)
                 .mostActiveHourStart(mostActiveHourStart)
                 .build();
