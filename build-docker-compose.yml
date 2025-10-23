@@ -117,7 +117,8 @@ services:
       dockerfile: Dockerfile
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - REDIS_HOST=redis
+      #- REDIS_HOST=redis
+      - SPRING_DATA_REDIS_HOST=redis
       - POSTGRES_HOST=userservice-db
     ports:
       - "8081:8080"

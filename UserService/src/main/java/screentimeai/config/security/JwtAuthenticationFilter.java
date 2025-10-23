@@ -7,6 +7,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
@@ -16,17 +17,21 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final StringRedisTemplate redisTemplate;
+    private static final String BLACKLIST_PREFIX = "jwt:blacklist:";
 
-    public JwtAuthenticationFilter(JwtUtil jwtUtil) {
+    public JwtAuthenticationFilter(JwtUtil jwtUtil, StringRedisTemplate redisTemplate) {
         this.jwtUtil = jwtUtil;
+        this.redisTemplate = redisTemplate;
     }
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        // signup, login, swagger 경로는 JWT 필터 건너뛰기
+        // signup, login, refresh, swagger 경로는 JWT 필터 건너뛰기
         return path.equals("/users/signup") ||
                path.equals("/users/login") ||
+               path.equals("/users/refresh") ||
                path.startsWith("/users/swagger-ui") ||
                path.startsWith("/users/v3/api-docs") ||
                path.equals("/users/swagger-ui.html");
@@ -46,6 +51,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 // ✅ 토큰에서 username 추출
                 String username = jwtUtil.getUsernameFromToken(token);
+                // ✅ 토큰에서 jti 추출
+                String jti = jwtUtil.getJtiFromToken(token);
+
+                // ✅ 블랙리스트 확인
+                if (jti != null && redisTemplate.hasKey(BLACKLIST_PREFIX + jti)) {
+                    setErrorResponse(response, HttpServletResponse.SC_FORBIDDEN, "블랙리스트에 등록된 토큰입니다.");
+                    return;
+                }
 
                 // ✅ 토큰 유효성 검사
                 if (jwtUtil.validateToken(token, username)) {

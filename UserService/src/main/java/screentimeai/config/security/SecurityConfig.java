@@ -13,17 +13,19 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import screentimeai.config.IpRateLimitFilter;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 @Configuration
 public class SecurityConfig {
 
     private final JwtUtil jwtUtil;
-    private final IpRateLimitFilter ipRateLimitFilter; //
+    private final IpRateLimitFilter ipRateLimitFilter;
+    private final StringRedisTemplate redisTemplate;
 
-    public SecurityConfig(JwtUtil jwtUtil, IpRateLimitFilter ipRateLimitFilter) {
-
+    public SecurityConfig(JwtUtil jwtUtil, IpRateLimitFilter ipRateLimitFilter, StringRedisTemplate redisTemplate) {
         this.jwtUtil = jwtUtil;
         this.ipRateLimitFilter = ipRateLimitFilter;
+        this.redisTemplate = redisTemplate;
     }
 
     @Bean
@@ -36,7 +38,7 @@ public class SecurityConfig {
         return http
                 .csrf(AbstractHttpConfigurer::disable) // JWT 기반이라 CSRF 비활성화
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST,"/users/signup", "/users/login").permitAll() // 회원가입/로그인만 허용
+                        .requestMatchers(HttpMethod.POST,"/users/signup", "/users/login", "/users/refresh").permitAll() // 회원가입/로그인/재발급 허용
                         .requestMatchers("/users/swagger-ui.html", "/users/swagger-ui/**", "/users/v3/api-docs", "/users/v3/api-docs/**").permitAll() // Swagger 허용
                         .requestMatchers("/actuator/health").permitAll() // Health check 허용
                         .anyRequest().authenticated() // 나머지는 인증 필요
@@ -45,7 +47,7 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS) // 세션 필요없음
                 )
                 .addFilterBefore(ipRateLimitFilter, UsernamePasswordAuthenticationFilter.class) //가장 먼저 실행해서 요청을 제한
-                .addFilterBefore(new JwtAuthenticationFilter(jwtUtil),// ratelitit을 통과한 요청에 대해 JWT 인증 처리
+                .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, redisTemplate), // ratelitit을 통과한 요청에 대해 JWT 인증 처리
                         UsernamePasswordAuthenticationFilter.class)
                 .build();
     }

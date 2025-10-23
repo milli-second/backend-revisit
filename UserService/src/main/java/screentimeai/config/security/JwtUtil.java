@@ -9,6 +9,7 @@ import screentimeai.presentation.dto.TokenInfo;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.UUID;
 import java.util.function.Function;
 
 @Component
@@ -37,18 +38,19 @@ public class JwtUtil {
 
     // Access Token 생성
     public String generateAccessToken(String nickname, String uuid) {
-        return createToken(nickname, uuid, ACCESS_TOKEN_VALIDITY_MS);
+        return createToken(nickname, uuid, ACCESS_TOKEN_VALIDITY_MS, true); // Access Token에만 jti 추가
     }
 
     // Refresh Token 생성
     public String generateRefreshToken(String nickname, String uuid) {
-        return createToken(nickname, uuid, REFRESH_TOKEN_VALIDITY_MS);
+        return createToken(nickname, uuid, REFRESH_TOKEN_VALIDITY_MS, false); // Refresh Token에는 jti 추가 안함
     }
 
-    private String createToken(String nickname, String uuid, long validityMs) {
+    private String createToken(String nickname, String uuid, long validityMs, boolean includeJti) {
         return Jwts.builder()
                 .setSubject(nickname)
                 .claim("uuid", uuid)
+                .claim("jti", includeJti ? UUID.randomUUID().toString() : null) // jti 클레임 추가
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + validityMs))
                 .signWith(SECRET_KEY)
@@ -63,6 +65,11 @@ public class JwtUtil {
     // 토큰에서 uuid 추출
     public String getUuidFromToken(String token) {
         return getClaimFromToken(token, claims -> claims.get("uuid", String.class));
+    }
+
+    // 토큰에서 jti 추출
+    public String getJtiFromToken(String token) {
+        return getClaimFromToken(token, claims -> claims.get("jti", String.class));
     }
 
     // 토큰이 만료됐는지 확인
@@ -82,7 +89,7 @@ public class JwtUtil {
     }
 
     // ================= 내부 유틸 메서드 =================
-    private Date getExpirationDateFromToken(String token) {
+    public Date getExpirationDateFromToken(String token) {
         return getClaimFromToken(token, Claims::getExpiration);
     }
 

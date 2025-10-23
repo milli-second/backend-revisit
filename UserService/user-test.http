@@ -1,19 +1,64 @@
+# @name baseUrl
+GET http://localhost:8088
+
 ### 사용자 회원가입 요청
-POST http://localhost:8081/users/signup
+# @name signup
+POST http://localhost:8088/users/signup
 Content-Type: application/json
 
 {
-  "nickname": "kimjinjuind1",
-  "password": "eoqkr111!!!",
-  "profileImageNumber": 2
+  "nickname": "testuser2",
+  "password": "password123!!!",
+  "profileImageNumber": 1
 }
 
 ### 사용자 로그인
-POST http://localhost:8081/users/login
+# @name login
+POST http://localhost:8088/users/login
 Content-Type: application/json
 
 {
-  "nickname": "kimjinjuind1",
-  "password": "eoqkr111!!!"
+  "nickname": "newtestuser3",
+  "password": "newpassword123!!!"
 }
+
+
+### Access Token으로 보호된 API 호출 예시 (예: 닉네임 변경)
+# @name changeNickname
+PATCH http://localhost:8088/users/change/nickname
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJuZXd0ZXN0dXNlcjMiLCJ1dWlkIjoiYTRhMWIyNjEtMTE4OS00Njc1LTg2ZWQtY2IwZTkxMmIyODg2IiwianRpIjoiNDhiZTAxNzgtOWY1My00YjRiLTg3YWQtNzhiYWE4NzBkNjkyIiwiaWF0IjoxNzYxMjEzMzY3LCJleHAiOjE3NjEyMTUxNjd9.w8Ns6eXBMFeKa5rNyUHn0lLFvUK6Qg8jUZJM3oklqZp8gtMUgYLkUgrng3NJDhIg
+
+{
+  "newNickname": "newtestuser2"
+}
+
+### Access Token으로 보호된 API 호출 예시 (예: 비밀번호 변경)
+# @name changePassword
+POST http://localhost:8088/users/change/password
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJuZXd0ZXN0dXNlcjIiLCJ1dWlkIjoiYTRhMWIyNjEtMTE4OS00Njc1LTg2ZWQtY2IwZTkxMmIyODg2IiwianRpIjoiOWRiNDAzYTktY2U0My00OTM4LWJhZTktNjhiM2I3MDdjMmUxIiwiaWF0IjoxNzYxMjEzMTQ4LCJleHAiOjE3NjEyMTQ5NDh9.4_FP27dk9Wm2t9y-b25x8WSqnJzppLAw7CzzTamKclP9kINEWpY039lH-0y0u92A
+
+{
+  "oldPassword": "newpassword123!!!",
+  "newPassword": "password123!!!"
+}
+
+### Access Token 재발급 요청 (Refresh Token 사용)
+# @name refresh
+POST http://localhost:8088/users/refresh
+Content-Type: application/json
+
+
+### 사용자 로그아웃
+# @name logout
+POST http://localhost:8088/users/logout
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJuZXd0ZXN0dXNlcjIiLCJ1dWlkIjoiYTRhMWIyNjEtMTE4OS00Njc1LTg2ZWQtY2IwZTkxMmIyODg2IiwianRpIjoiOWRiNDAzYTktY2U0My00OTM4LWJhZTktNjhiM2I3MDdjMmUxIiwiaWF0IjoxNzYxMjEzMTQ4LCJleHAiOjE3NjEyMTQ5NDh9.4_FP27dk9Wm2t9y-b25x8WSqnJzppLAw7CzzTamKclP9kINEWpY039lH-0y0u92A
+
+
+### Redis에서 Refresh Token 재사용 탐지 시뮬레이션 (주의: 이 시나리오는 에러를 발생시킵니다)
+# @name refresh_reuse_detection
+POST http://localhost:8088/users/refresh
+Content-Type: application/json
 

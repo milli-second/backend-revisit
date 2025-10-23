@@ -2,20 +2,19 @@ package screentimeai.presentation.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import screentimeai.application.UserService;
 import screentimeai.config.security.JwtUtil;
-import screentimeai.presentation.dto.LoginRequest;
-import screentimeai.presentation.dto.SignupRequest;
-import screentimeai.presentation.dto.ChangePasswordRequest;
-import screentimeai.presentation.dto.ChangeNicknameRequest;
-import screentimeai.presentation.dto.ChangeProfileImageRequest;
+import screentimeai.presentation.dto.*;
+
 import java.util.Map;
 
 @RestController
-@RequestMapping(value="/users")
+@RequestMapping(value = "/users")
 public class UserController {
     private final UserService userService;
     private final JwtUtil jwtUtil;
@@ -31,15 +30,38 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
-        String token = userService.login(request.getNickname(), request.getPassword());
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
+        TokenInfo tokenInfo = userService.login(request.getNickname(), request.getPassword());
 
-        //User user = userService.login(request.getNickname(), request.getPassword());
-        //String token = jwtUtil.generateToken(user.getNickname());
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", tokenInfo.getRefreshToken())
+                .maxAge(7 * 24 * 60 * 60) // 7일
+                .path("/")
+                .secure(true)
+                .httpOnly(true)
+                .build();
+        response.setHeader("Set-Cookie", cookie.toString());
 
         return ResponseEntity.ok(Map.of(
-                "token", token,
+                "accessToken", tokenInfo.getAccessToken(),
                 "nickname", request.getNickname()
+        ));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(@CookieValue(name = "refreshToken") String refreshToken, HttpServletResponse response) {
+        TokenInfo tokenInfo = userService.reissueTokens(refreshToken);
+
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", tokenInfo.getRefreshToken())
+                .maxAge(7 * 24 * 60 * 60) // 7일
+                .path("/")
+                .secure(true)
+                .httpOnly(true)
+                .build();
+        response.setHeader("Set-Cookie", cookie.toString());
+
+        return ResponseEntity.ok(Map.of(
+                "accessToken", tokenInfo.getAccessToken(),
+                "nickname", jwtUtil.getUsernameFromToken(tokenInfo.getAccessToken())
         ));
     }
 
@@ -51,14 +73,13 @@ public class UserController {
         String accessToken = token.replace("Bearer ", "");
 
         // JWT에서 닉네임 추출
-        String nickname = jwtUtil.getUsernameFromToken(accessToken);
-        userService.logout(nickname);
+        userService.logout(accessToken);
         return ResponseEntity.ok("로그아웃 완료");
     }
 
     @PostMapping("/signup")
     public String signup(@Valid @RequestBody SignupRequest request) {
-        userService.signup(request.getNickname(), request.getPassword(),request.getProfileImageNumber());
+        userService.signup(request.getNickname(), request.getPassword(), request.getProfileImageNumber());
         return "User signed up: " + request.getNickname();
     }
 
@@ -69,13 +90,11 @@ public class UserController {
             @Parameter(hidden = true) @RequestHeader("Authorization") String token,
             @Valid @RequestBody ChangeNicknameRequest request
     ) {
-        // 1️⃣ 토큰에서 기존 닉네임 추출
+        // 1️⃣ 토큰에서 기존 닉네임 추출 (이제 서비스에서 처리)
         String accessToken = token.replace("Bearer ", "");
-        String currentNickname = jwtUtil.getUsernameFromToken(accessToken);
-        System.out.println("nickname from token(change-nickname): " + currentNickname);
 
         // 2️⃣ 서비스 호출
-        userService.changeNickname(currentNickname, request.getNewNickname());
+        userService.changeNickname(accessToken, request.getNewNickname());
         return ResponseEntity.ok("닉네임이 성공적으로 변경되었습니다.");
     }
 
@@ -87,13 +106,11 @@ public class UserController {
             @Parameter(hidden = true) @RequestHeader("Authorization") String token,
             @Valid @RequestBody ChangePasswordRequest request
     ) {
-        // 1️⃣ 토큰에서 닉네임 추출
+        // 1️⃣ 토큰에서 닉네임 추출 (이제 서비스에서 처리)
         String accessToken = token.replace("Bearer ", "");
-        String nickname = jwtUtil.getUsernameFromToken(accessToken);
-        System.out.println("nickname from token(change-password): " + nickname);
 
         // 2️⃣ 서비스 호출
-        userService.changePassword(nickname, request.getOldPassword(), request.getNewPassword());
+        userService.changePassword(accessToken, request.getOldPassword(), request.getNewPassword());
 
         return ResponseEntity.ok("비밀번호가 성공적으로 변경되었습니다.");
     }
@@ -112,7 +129,6 @@ public class UserController {
 
         // 2️⃣ 서비스 호출 (→ 내부에서 Redis 인증)
         userService.changeProfileImage(nickname, request.getProfileImageNumber());
-
         return ResponseEntity.ok("프로필 이미지가 성공적으로 변경되었습니다.");
     }
 }
