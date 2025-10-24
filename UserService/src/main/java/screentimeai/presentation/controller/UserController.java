@@ -11,6 +11,7 @@ import screentimeai.application.UserService;
 import screentimeai.config.security.JwtUtil;
 import screentimeai.presentation.dto.*;
 
+import screentimeai.presentation.dto.UserInfoResponse;
 import java.util.Map;
 
 @RestController
@@ -130,5 +131,15 @@ public class UserController {
         // 2️⃣ 서비스 호출 (→ 내부에서 Redis 인증)
         userService.changeProfileImage(nickname, request.getProfileImageNumber());
         return ResponseEntity.ok("프로필 이미지가 성공적으로 변경되었습니다.");
+    }
+
+    // ✅ 내 정보 조회
+    @GetMapping("/me")
+    @SecurityRequirement(name = "JWT Authentication")
+    public ResponseEntity<UserInfoResponse> getUserInfo(
+            @Parameter(hidden = true) @RequestHeader("Authorization") String token) {
+        String accessToken = token.replace("Bearer ", "");
+        UserInfoResponse userInfo = userService.getUserInfo(accessToken);
+        return ResponseEntity.ok(userInfo);
     }
 }

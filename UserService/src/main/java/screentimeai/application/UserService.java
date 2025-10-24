@@ -12,6 +12,7 @@ import screentimeai.domain.entity.User;
 import screentimeai.infra.repository.UserRepository;
 import screentimeai.presentation.dto.RedisTokenInfo;
 import screentimeai.presentation.dto.TokenInfo;
+import screentimeai.presentation.dto.UserInfoResponse;
 
 import java.util.concurrent.TimeUnit;
 
@@ -218,5 +219,18 @@ public class UserService {
         user.deactivate();
         userRepository.save(user);
         System.out.println("🗑️ Account deactivated: " + nickname);
+    }
+
+    public UserInfoResponse getUserInfo(String accessToken) {
+        String uuid = jwtUtil.getUuidFromToken(accessToken);
+        User user = userRepository.findByUuid(uuid)
+                .orElseThrow(() -> new IllegalArgumentException("❌ 사용자 없음: " + uuid));
+
+        return UserInfoResponse.builder()
+                .nickname(user.getNickname())
+                .uuid(user.getUuid())
+                .profileImageNumber(user.getProfile_image_number())
+                .category(user.getCategory())
+                .build();
     }
 }

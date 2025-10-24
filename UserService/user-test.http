@@ -18,16 +18,23 @@ POST http://localhost:8088/users/login
 Content-Type: application/json
 
 {
-  "nickname": "newtestuser3",
-  "password": "newpassword123!!!"
+  "nickname": "newtestuser2",
+  "password": "password123!!!"
 }
+
+### 사용자 로그인
+# @name me
+GET http://localhost:8088/users/me
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJuZXd0ZXN0dXNlcjIiLCJ1dWlkIjoiYTRhMWIyNjEtMTE4OS00Njc1LTg2ZWQtY2IwZTkxMmIyODg2IiwianRpIjoiZjVmYjFiOGEtNmUyNS00NzYxLWIyZWEtOTU0ZTg0ZTk4YmUxIiwiaWF0IjoxNzYxMjIyNDk4LCJleHAiOjE3NjEyMjQyOTh9.4XaolPYnDMzreDmmuwctMdKW0iQRHMPyDFMOTtKFQ1bxbOr0avJeJwMlAvoD7c1n
+
 
 
 ### Access Token으로 보호된 API 호출 예시 (예: 닉네임 변경)
 # @name changeNickname
 PATCH http://localhost:8088/users/change/nickname
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJuZXd0ZXN0dXNlcjMiLCJ1dWlkIjoiYTRhMWIyNjEtMTE4OS00Njc1LTg2ZWQtY2IwZTkxMmIyODg2IiwianRpIjoiNDhiZTAxNzgtOWY1My00YjRiLTg3YWQtNzhiYWE4NzBkNjkyIiwiaWF0IjoxNzYxMjEzMzY3LCJleHAiOjE3NjEyMTUxNjd9.w8Ns6eXBMFeKa5rNyUHn0lLFvUK6Qg8jUZJM3oklqZp8gtMUgYLkUgrng3NJDhIg
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJuZXd0ZXN0dXNlcjIiLCJ1dWlkIjoiYTRhMWIyNjEtMTE4OS00Njc1LTg2ZWQtY2IwZTkxMmIyODg2IiwianRpIjoiZjVmYjFiOGEtNmUyNS00NzYxLWIyZWEtOTU0ZTg0ZTk4YmUxIiwiaWF0IjoxNzYxMjIyNDk4LCJleHAiOjE3NjEyMjQyOTh9.4XaolPYnDMzreDmmuwctMdKW0iQRHMPyDFMOTtKFQ1bxbOr0avJeJwMlAvoD7c1n
 
 {
   "newNickname": "newtestuser2"
