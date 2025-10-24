@@ -17,30 +17,30 @@ public class UserEventHandler {
     @TransactionalEventListener
     public void handle(LoggedIn event) {
         System.out.println("🎯 Handling LoggedIn event: " + event.getNickname());
-        eventPublisher.publish("eventProducer-out-2", event, "LoggedIn");
+        eventPublisher.publish("user_login", event, "LoggedIn");
     }
 
     @TransactionalEventListener
     public void handle(LoggedOut event) {
         System.out.println("🎯 Handling LoggedOut event: " + event.getNickname());
-        eventPublisher.publish("eventProducer-out-1", event, "LoggedOut");
+        eventPublisher.publish("user_logout", event, "LoggedOut");
     }
 
     @TransactionalEventListener
     public void handle(SignedUp event) {
         System.out.println("🎯 Handling SignedUp event: " + event.getNickname());
-        eventPublisher.publish("eventProducer-out-0", event, "SignedUp");
+        eventPublisher.publish("user_signup", event, "SignedUp");
     }
 
     @TransactionalEventListener
     public void handle(PasswordChanged event) {
         System.out.println("🎯Handling SignedUp event: " + event.getNickname());
-        eventPublisher.publish("eventProducer-out-3", event, "PasswordChanged");
+        eventPublisher.publish("user_change_password", event, "PasswordChanged");
     }
 
     @TransactionalEventListener
     public void handle(AccountDeactivated event) {
         System.out.println("🎯Handling SignedUp event: " + event.getNickname());
-        eventPublisher.publish("eventProducer-out-4", event, "PasswordChanged");
+        eventPublisher.publish("user_deactivate", event, "PasswordChanged");
     }
 }

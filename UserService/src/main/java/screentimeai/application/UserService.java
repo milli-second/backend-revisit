@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.messaging.MessageHeaders;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +14,11 @@ import screentimeai.infra.repository.UserRepository;
 import screentimeai.presentation.dto.RedisTokenInfo;
 import screentimeai.presentation.dto.TokenInfo;
 import screentimeai.presentation.dto.UserInfoResponse;
+import screentimeai.domain.entity.SignedUp;
+import org.springframework.cloud.stream.function.StreamBridge;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.util.MimeTypeUtils;
 
 import java.util.concurrent.TimeUnit;
 
@@ -25,6 +31,7 @@ public class UserService {
     private final JwtUtil jwtUtil;
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper; // ObjectMapper 주입
+    private final StreamBridge streamBridge; // StreamBridge 주입
 
     private static final String BLACKLIST_PREFIX = "jwt:blacklist:";
 
@@ -32,12 +39,21 @@ public class UserService {
         if (userRepository.existsByNickname(nickname)) {
             throw new IllegalArgumentException("이미 사용 중인 닉네임입니다: " + nickname);
         }
-
         User user = new User();
         user.setNickname(nickname);
         user.setProfile_image_number(profileImageNumber);
         user.signup(rawPassword, passwordEncoder, profileImageNumber);
         userRepository.save(user);
+        // ✅ UUID가 설정된 후 SignedUp 이벤트 명시적 발행
+        try {
+            String signedUpEventJson = objectMapper.writeValueAsString(new SignedUp(user));
+            Message<String> message = MessageBuilder.withPayload(signedUpEventJson)
+                    .setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON_VALUE)
+                    .build();
+            streamBridge.send("user_signup", message);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("SignedUp 이벤트 직렬화 오류", e);
+        }
         System.out.println("✅ User signup completed: " + nickname);
     }
 
@@ -178,10 +194,8 @@ public class UserService {
         if (userRepository.existsByNickname(newNickname)) {
             throw new IllegalArgumentException("❌ 이미 사용 중인 닉네임입니다: " + newNickname);
         }
-
         user.changeNickname(newNickname);
         userRepository.save(user);
-
         System.out.println("✅ Nickname changed from " + user.getNickname() + " → " + newNickname);
     }
 
@@ -209,7 +223,6 @@ public class UserService {
 
         user.changeProfileImage(newProfileImageNumber);
         userRepository.save(user);
-
         System.out.println("🖼️ Profile image updated for user: " + user.getNickname() + " → " + newProfileImageNumber);
     }
 

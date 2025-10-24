@@ -51,7 +51,6 @@ public class User {
 
     public void signup(String rawPassword, PasswordEncoder encoder,int profileImageNumber) {
         this.password = encoder.encode(rawPassword);
-        this.domainEvents.add(new SignedUp(this));
         this.profile_image_number = profileImageNumber; // ✅ 프로필 번호 설정
     }
 

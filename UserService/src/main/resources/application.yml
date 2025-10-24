@@ -24,18 +24,22 @@ spring:
         show_sql: true
         format_sql: true
 
-  kafka:
-    bootstrap-servers: localhost:9092
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-    consumer:
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      properties:
-        spring.json.trusted.packages: "*"
-    properties:
-      security.protocol: PLAINTEXT
+#  kafka:
+#    bootstrap-servers: localhost:9092
+#    producer:
+#      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+#      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+#      properties:
+#        spring.json.use.type.headers: false # 순수 JSON 발행을 위해 타입 헤더 사용 비활성화
+#    consumer:
+#      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+#      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+#      properties:
+#        spring.json.trusted.packages: "*"
+#    properties:
+#      security.protocol: PLAINTEXT
+
+
 
   cloud:
     stream:
@@ -55,6 +59,11 @@ spring:
         produceAccountDeactivated:
           destination: user_deactivated
           contentType: application/json
+      kafka:
+        binder:
+          brokers: localhost:9092
+          configuration:
+            security.protocol: PLAINTEXT
 
 logging:
   level:
@@ -100,7 +109,8 @@ spring:
     url: jdbc:postgresql://${POSTGRES_HOST:userservice-postgres.db.svc.cluster.local}:5432/userservice
 
   kafka:
-    bootstrap-servers: kafka-0.kafka.db.svc.cluster.local:9092
+    #bootstrap-servers: kafka-0.kafka.db.svc.cluster.local:9092
+    bootstrap-servers: my-kafka:9092
     properties:
       security.protocol: PLAINTEXT
 
