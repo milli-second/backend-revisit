@@ -1,25 +1,55 @@
-name: Push to GitLab
+name: Push to GitLab and KtCloud GitLab 
 
 on:
   push:
     branches:
-      - main  # GitHub에서 푸시되는 브랜치 이름
+      - '**'  # GitHub에서 푸시되는 브랜치 이름
 
 jobs:
   push_to_gitlab:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout GitHub repository
+      # 1단계: GitHub 저장소 코드 가져오기
+      - name: GitHub 저장소 코드 가져오기 (Checkout GitHub repository)
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 0 # 모든 Git 히스토리를 가져옵니다.
 
-      - name: Set Git config
+      # 2단계: 모든 원격 브랜치를 로컬로 가져오기
+      - name: 모든 브랜치 가져오기 (Fetch all branches)
         run: |
-          git config --global user.name "hkkim2021"
-          git config --global user.email "khk990619@gmail.com"
+          git fetch --all
+          # 원격 브랜치를 로컬 브랜치로 추적 설정 (이미 존재하면 무시)
+          for branch in $(git branch -r | grep -vE 'HEAD|master|main' | sed 's/origin\///'); do
+            git branch --track $branch origin/$branch || true
+          done
 
-      - name: Push to GitLab
+      # 3단계: Git 사용자 정보 설정
+      - name: Git 사용자 정보 설정 (Set Git config)
         run: |
-          git remote add gitlab https://oauth2:${{ secrets.GITLAB_TOKEN }}@gitlab.com/layla7120-group/backend.git
-          git push gitlab main --force
+          git config --global user.name "hkkim2021" # GitHub 사용자 이름 또는 원하는 이름
+          git config --global user.email "khk990619@gmail.com" # GitHub 이메일 또는 원하는 이메일
+
+      # 4단계: 양쪽 GitLab 원격 저장소로 푸시
+      - name: 양쪽 GitLab 원격 저장소로 푸시 (Push to Both GitLab Remotes)
+        env:
+          # GitHub Secrets에 저장된 각 GitLab의 Access Token 사용
+          GITLAB_COM_TOKEN: ${{ secrets.GITLAB_TOKEN }}    # gitlab.com 용 토큰
+          KTCLOUD_GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN2 }} # gitlab.yolang.shop 용 토큰
+        run: |
+          # 4-1. gitlab.com 원격 저장소 추가 및 푸시
+          git remote add gitlab_com https://oauth2:${GITLAB_COM_TOKEN}@gitlab.com/layla7120-group/backend.git
+          echo "gitlab.com 으로 푸시 중..."
+          # 모든 브랜치와 태그 푸시 (실패해도 다음 단계 진행)
+          (git push gitlab_com --all && git push gitlab_com --tags) || echo "gitlab.com 푸시 실패, 하지만 계속 진행합니다..."
+
+          # 4-2. gitlab.yolang.shop 원격 저장소 추가 및 푸시
+          # ⚠️ 정확한 Git 저장소 주소 사용!
+          git remote add ktcloud_gitlab http://oauth2:${KTCLOUD_GITLAB_TOKEN}@gitlab.yolang.shop/gitlab-instance-5f6a84f3/backend.git
+          echo "gitlab.yolang.shop 으로 푸시 중..."
+          # 모든 브랜치와 태그 푸시
+          (git push ktcloud_gitlab --all && git push ktcloud_gitlab --tags) || echo "gitlab.yolang.shop 푸시 실패."
+
+          # (선택사항) 푸시 완료 후 원격 저장소 정보 삭제
+          # git remote remove gitlab_com
+          # git remote remove ktcloud_gitlab
