@@ -40,21 +40,21 @@ spring:
   cloud:
     stream:
       bindings:
-        eventProducer-out-0:
+        produceSignedUp:
           destination: user_signup
           contentType: application/json
-        eventProducer-out-1:
+        produceLoggedOut:
           destination: user_logout
           contentType: application/json
-        eventProducer-out-2:
+        produceLoggedIn:
           destination: user_login
           contentType: application/json
-        eventProducer-out-3:
+        producePasswordChanged:
           destination: user_password_changed
-          content-type: application/json
-        eventProducer-out-4:
+          contentType: application/json
+        produceAccountDeactivated:
           destination: user_deactivated
-          content-type: application/json
+          contentType: application/json
 
 logging:
   level:
