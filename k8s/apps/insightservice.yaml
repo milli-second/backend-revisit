@@ -1,0 +1,101 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: insightservice-config
+  namespace: screentimeai
+data:
+  SPRING_PROFILES_ACTIVE: "docker"
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://insightservice-postgres-0.insightservice-postgres.db.svc.cluster.local:5432/insightservice_db"
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka-0.kafka.db.svc.cluster.local:9092"
+  SPRINGDOC_SWAGGER_UI_SERVER_URL: "https://api.yolang.shop"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: insightservice
+  namespace: screentimeai
+spec:
+  selector:
+    app: insightservice
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: insightservice
+  namespace: screentimeai
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: insightservice
+  template:
+    metadata:
+      labels:
+        app: insightservice
+    spec:
+      containers:
+      - name: insightservice
+        image: laylaoh/insightservice:latest-amd64
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          valueFrom:
+            configMapKeyRef:
+              name: insightservice-config
+              key: SPRING_PROFILES_ACTIVE
+        - name: SPRING_DATASOURCE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: insightservice-config
+              key: SPRING_DATASOURCE_URL
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: insightservice-db-secret
+              key: POSTGRES_USER
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: insightservice-db-secret
+              key: POSTGRES_PASSWORD
+        - name: SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS
+          valueFrom:
+            configMapKeyRef:
+              name: insightservice-config
+              key: SPRING_KAFKA_BOOTSTRAP_SERVERS
+        - name: SPRINGDOC_SWAGGER_UI_SERVER_URL
+          valueFrom:
+            configMapKeyRef:
+              name: insightservice-config
+              key: SPRINGDOC_SWAGGER_UI_SERVER_URL
+        resources:
+          requests:
+            memory: "384Mi"
+            cpu: "300m"
+          limits:
+            memory: "768Mi"
+            cpu: "700m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 90
+          periodSeconds: 15
+          timeoutSeconds: 10
+          failureThreshold: 6
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 10

@@ -15,6 +15,7 @@ k8s/
 └── apps/                       # namespace: screentimeai
     ├── userservice.yaml
     ├── usageservice.yaml
+    ├── insightservice.yaml
     └── gateway.yaml
 ```
 
@@ -82,6 +83,7 @@ kubectl wait --for=condition=ready pod -l app=kafka -n db --timeout=120s
 ```bash
 kubectl apply -f apps/userservice.yaml
 kubectl apply -f apps/usageservice.yaml
+kubectl apply -f apps/insightservice.yaml
 kubectl apply -f apps/gateway.yaml
 ```
 

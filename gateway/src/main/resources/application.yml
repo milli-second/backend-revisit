@@ -48,3 +48,5 @@ springdoc:
         url: /users/v3/api-docs
       - name: Usage Service
         url: /usage/v3/api-docs
+      - name: Insight Service
+        url: /insights/v3/api-docs
