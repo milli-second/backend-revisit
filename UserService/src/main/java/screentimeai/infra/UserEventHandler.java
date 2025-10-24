@@ -33,6 +33,12 @@ public class UserEventHandler {
     }
 
     @TransactionalEventListener
+    public void handle(NicknameChanged event) {
+        System.out.println("🎯Handling Change Nickname event: " + event.getNickname());
+        eventPublisher.publish("user_nickname_changed", event, "NicknameChanged");
+    }
+
+    @TransactionalEventListener
     public void handle(PasswordChanged event) {
         System.out.println("🎯Handling SignedUp event: " + event.getNickname());
         eventPublisher.publish("user_change_password", event, "PasswordChanged");
@@ -40,7 +46,7 @@ public class UserEventHandler {
 
     @TransactionalEventListener
     public void handle(AccountDeactivated event) {
-        System.out.println("🎯Handling SignedUp event: " + event.getNickname());
+        System.out.println("🎯Handling Deactivate event: " + event.getNickname());
         eventPublisher.publish("user_deactivate", event, "PasswordChanged");
     }
 }

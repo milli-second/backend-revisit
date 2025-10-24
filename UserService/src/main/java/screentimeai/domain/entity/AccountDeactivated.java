@@ -7,13 +7,12 @@ import screentimeai.infra.AbstractEvent;
 @Data
 @ToString
 public class AccountDeactivated extends AbstractEvent {
-    private Long id;
+    private String subject_id;
     private String nickname;
 
-    public AccountDeactivated(User user) {
-        super(user);
-        this.id = user.getId();
-        this.nickname = user.getNickname();
+    public AccountDeactivated(String subject_id, String nickname) {
+        this.subject_id = subject_id;
+        this.nickname = nickname;
     }
 
     public AccountDeactivated() {

@@ -53,6 +53,9 @@ spring:
         produceLoggedIn:
           destination: user_login
           contentType: application/json
+        produceNicknameChanged:
+          destination: user_nickname_changed
+          contentType: application/json
         producePasswordChanged:
           destination: user_password_changed
           contentType: application/json

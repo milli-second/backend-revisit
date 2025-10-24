@@ -8,11 +8,12 @@ import screentimeai.infra.AbstractEvent;
 @ToString
 public class LoggedOut extends AbstractEvent {
 
-    private Long id;
+    private String subject_id;
     private String nickname;
 
-    public LoggedOut(User aggregate) {
-        super(aggregate);
+    public LoggedOut(String subjectId, String nickname) {
+        this.subject_id = subjectId;
+        this.nickname = nickname;
     }
 
     public LoggedOut() {

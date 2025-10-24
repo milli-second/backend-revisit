@@ -7,12 +7,12 @@ import screentimeai.infra.AbstractEvent;
 @Data
 @ToString
 public class PasswordChanged extends AbstractEvent {
-    private Long id;
     private String nickname;
+    private String subject_id;
 
-    public PasswordChanged(User user) {
-        this.id = user.getId();
-        this.nickname = user.getNickname();
+    public PasswordChanged(String subjectId, String nickname) {
+        this.subject_id = subjectId;
+        this.nickname = nickname;
     }
 
     public PasswordChanged() {

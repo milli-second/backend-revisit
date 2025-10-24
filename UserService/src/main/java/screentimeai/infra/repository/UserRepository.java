@@ -1,5 +1,6 @@
 package screentimeai.infra.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import screentimeai.domain.entity.User;
 
 import java.util.Optional;
@@ -8,5 +9,6 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByNickname(String nickname); // 중복 체크용
     Optional<User> findByNickname(String nickname); // ✅ 유저 조회용
-    Optional<User> findByUuid(String uuid); // ✅ UUID로 유저 조회용
+    @Query("SELECT u FROM User u WHERE u.subject_id = :subject_id")
+    Optional<User> findBySubject_id(String subject_id); // ✅ subject_id로 유저 조회용
 }

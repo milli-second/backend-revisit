@@ -9,12 +9,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import screentimeai.config.security.JwtUtil;
-import screentimeai.domain.entity.User;
+import screentimeai.domain.entity.*;
 import screentimeai.infra.repository.UserRepository;
 import screentimeai.presentation.dto.RedisTokenInfo;
 import screentimeai.presentation.dto.TokenInfo;
 import screentimeai.presentation.dto.UserInfoResponse;
-import screentimeai.domain.entity.SignedUp;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
@@ -46,7 +45,7 @@ public class UserService {
         userRepository.save(user);
         // ✅ UUID가 설정된 후 SignedUp 이벤트 명시적 발행
         try {
-            String signedUpEventJson = objectMapper.writeValueAsString(new SignedUp(user));
+            String signedUpEventJson = objectMapper.writeValueAsString(new SignedUp(user.getSubject_id(), user.getNickname(), user.getCategory()));
             Message<String> message = MessageBuilder.withPayload(signedUpEventJson)
                     .setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON_VALUE)
                     .build();
@@ -62,7 +61,7 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("❌ 사용자 없음: " + nickname));
         user.login(rawPassword, passwordEncoder);
 
-        TokenInfo tokenInfo = jwtUtil.generateTokens(user.getNickname(), user.getUuid());
+        TokenInfo tokenInfo = jwtUtil.generateTokens(user.getNickname(), user.getSubject_id());
 
         try {
             // RedisTokenInfo 객체 생성
@@ -73,7 +72,7 @@ public class UserService {
 
             // Redis에 JSON 문자열로 저장 (유효기간 7일)
             redisTemplate.opsForValue().set(
-                    user.getUuid(),
+                    user.getSubject_id(),
                     objectMapper.writeValueAsString(redisTokenInfo),
                     7,
                     TimeUnit.DAYS
@@ -81,8 +80,17 @@ public class UserService {
         } catch (JsonProcessingException e) {
             throw new RuntimeException("RedisTokenInfo 직렬화 오류", e);
         }
-
         userRepository.save(user);
+        // ✅ LoggedIn 이벤트 명시적 발행
+        try {
+            String loggedInEventJson = objectMapper.writeValueAsString(new LoggedIn(user.getSubject_id(), user.getNickname()));
+            Message<String> message = MessageBuilder.withPayload(loggedInEventJson)
+                    .setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON_VALUE)
+                    .build();
+            streamBridge.send("user_login", message);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("LoggedIn 이벤트 직렬화 오류", e);
+        }
         System.out.println("✅ User login completed: " + nickname);
         return tokenInfo;
     }
@@ -128,11 +136,11 @@ public class UserService {
             throw new SecurityException("🚨 비정상적인 토큰 재발급 요청입니다. 모든 세션이 종료됩니다.");
         }
 
-        User user = userRepository.findByUuid(uuid)
+        User user = userRepository.findBySubject_id(uuid)
                 .orElseThrow(() -> new IllegalArgumentException("❌ 사용자를 찾을 수 없습니다."));
 
         // 5. 새로운 토큰 생성 (회전)
-        TokenInfo newTokenInfo = jwtUtil.generateTokens(user.getNickname(), user.getUuid());
+        TokenInfo newTokenInfo = jwtUtil.generateTokens(user.getNickname(), user.getSubject_id());
 
         try {
             // 6. Redis에 새로운 Refresh Token 정보 저장
@@ -158,12 +166,12 @@ public class UserService {
 
     public void logout(String accessToken) {
         String uuid = jwtUtil.getUuidFromToken(accessToken);
-        User user = userRepository.findByUuid(uuid)
+        User user = userRepository.findBySubject_id(uuid)
                 .orElseThrow(() -> new IllegalArgumentException("❌ 사용자 없음: " + uuid));
         user.logout();
 
-        // ✅ Redis에서 Refresh Token 정보 삭제
-        redisTemplate.delete(user.getUuid());
+        // ✅ Redis에서 Refresh Token 정보 삭제1
+        redisTemplate.delete(user.getSubject_id());
 
         // ✅ Access Token의 jti를 블랙리스트에 추가
         String jti = jwtUtil.getJtiFromToken(accessToken);
@@ -183,12 +191,22 @@ public class UserService {
         }
 
         userRepository.save(user);
+        // ✅ LoggedOut 이벤트 명시적 발행
+        try {
+            String loggedOutEventJson = objectMapper.writeValueAsString(new LoggedOut(user.getSubject_id(), user.getNickname()));
+            Message<String> message = MessageBuilder.withPayload(loggedOutEventJson)
+                    .setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON_VALUE)
+                    .build();
+            streamBridge.send("user_logout", message);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("LoggedOut 이벤트 직렬화 오류", e);
+        }
         System.out.println("✅ User logout completed: " + user.getNickname());
     }
 
     public void changeNickname(String accessToken, String newNickname) {
         String uuid = jwtUtil.getUuidFromToken(accessToken);
-        User user = userRepository.findByUuid(uuid)
+        User user = userRepository.findBySubject_id(uuid)
                 .orElseThrow(() -> new IllegalArgumentException("❌ 사용자 없음: " + uuid));
 
         if (userRepository.existsByNickname(newNickname)) {
@@ -196,33 +214,62 @@ public class UserService {
         }
         user.changeNickname(newNickname);
         userRepository.save(user);
+        // ✅ NicknameChanged 이벤트 명시적 발행
+        try {
+            String nicknameChangedEventJson = objectMapper.writeValueAsString(new NicknameChanged(user.getSubject_id(), newNickname));
+            Message<String> message = MessageBuilder.withPayload(nicknameChangedEventJson)
+                    .setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON_VALUE)
+                    .build();
+            streamBridge.send("user_nickname_changed", message);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("NicknameChanged 이벤트 직렬화 오류", e);
+        }
         System.out.println("✅ Nickname changed from " + user.getNickname() + " → " + newNickname);
     }
 
     public void changePassword(String accessToken, String oldPassword, String newPassword) {
         String uuid = jwtUtil.getUuidFromToken(accessToken);
-        User user = userRepository.findByUuid(uuid)
+        User user = userRepository.findBySubject_id(uuid)
                 .orElseThrow(() -> new IllegalArgumentException("❌ 사용자 없음: " + uuid));
 
         user.changePassword(oldPassword, newPassword, passwordEncoder);
         userRepository.save(user);
         // ✅ 비밀번호 변경 시 Refresh Token 무효화 (모든 세션 종료)
-        redisTemplate.delete(user.getUuid());
+        redisTemplate.delete(user.getSubject_id());
+        // ✅ PasswordChanged 이벤트 명시적 발행
+        try {
+            String passwordChangedEventJson = objectMapper.writeValueAsString(new PasswordChanged(user.getSubject_id(), user.getNickname()));
+            Message<String> message = MessageBuilder.withPayload(passwordChangedEventJson)
+                    .setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON_VALUE)
+                    .build();
+            streamBridge.send("user_password_changed", message);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("PasswordChanged 이벤트 직렬화 오류", e);
+        }
         System.out.println("✅ Password changed for user: " + user.getNickname());
     }
 
     @Transactional
     public void changeProfileImage(String accessToken, int newProfileImageNumber) {
         String uuid = jwtUtil.getUuidFromToken(accessToken);
-        User user = userRepository.findByUuid(uuid)
+        User user = userRepository.findBySubject_id(uuid)
                 .orElseThrow(() -> new IllegalArgumentException("❌ 사용자 없음: " + uuid));
 
         if (newProfileImageNumber < 1 || newProfileImageNumber > 8) {
             throw new IllegalArgumentException("프로필 이미지 번호는 1~8 사이여야 합니다.");
         }
-
         user.changeProfileImage(newProfileImageNumber);
         userRepository.save(user);
+        // ✅ ProfileImageChanged 이벤트 명시적 발행
+        try {
+            String profileImageChangedEventJson = objectMapper.writeValueAsString(new ProfileImageChanged(user.getSubject_id(), newProfileImageNumber));
+            Message<String> message = MessageBuilder.withPayload(profileImageChangedEventJson)
+                    .setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON_VALUE)
+                    .build();
+            streamBridge.send("user_profile_image_changed", message);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("ProfileImageChanged 이벤트 직렬화 오류", e);
+        }
         System.out.println("🖼️ Profile image updated for user: " + user.getNickname() + " → " + newProfileImageNumber);
     }
 
@@ -231,17 +278,27 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("❌ 사용자 없음: " + nickname));
         user.deactivate();
         userRepository.save(user);
+        // ✅ AccountDeactivated 이벤트 명시적 발행
+        try {
+            String accountDeactivatedEventJson = objectMapper.writeValueAsString(new AccountDeactivated(user.getSubject_id(), user.getNickname()));
+            Message<String> message = MessageBuilder.withPayload(accountDeactivatedEventJson)
+                    .setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON_VALUE)
+                    .build();
+            streamBridge.send("user_account_deactivated", message);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("AccountDeactivated 이벤트 직렬화 오류", e);
+        }
         System.out.println("🗑️ Account deactivated: " + nickname);
     }
 
     public UserInfoResponse getUserInfo(String accessToken) {
         String uuid = jwtUtil.getUuidFromToken(accessToken);
-        User user = userRepository.findByUuid(uuid)
+        User user = userRepository.findBySubject_id(uuid)
                 .orElseThrow(() -> new IllegalArgumentException("❌ 사용자 없음: " + uuid));
 
         return UserInfoResponse.builder()
                 .nickname(user.getNickname())
-                .uuid(user.getUuid())
+                .uuid(user.getSubject_id())
                 .profileImageNumber(user.getProfile_image_number())
                 .category(user.getCategory())
                 .build();
