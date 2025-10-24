@@ -6,6 +6,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import screentimeai.domain.entity.*;
+import screentimeai.domain.service.SnsInsightService;
 import screentimeai.infra.repository.DailyCategoryUsageRepository;
 import screentimeai.infra.repository.DailyUserMetricsRepository;
 
@@ -24,6 +25,8 @@ public class DailyMetricsBatchService {
     private final DailyCategoryUsageRepository categoryUsageRepository;
 
     private final AppUsageTracker appUsageTracker;
+    private final AbstractEventPublisher eventPublisher;
+    private final SnsInsightService snsInsightService;
 
     private static final String REDIS_KEY_PREFIX = "daily_metrics:";
 
@@ -85,12 +88,14 @@ public class DailyMetricsBatchService {
      * 매일 자정에 실행: Redis 데이터를 DB에 저장하고 Redis 삭제
      */
 
-    @Scheduled(cron = "0 0 0 * * *")  // 매일 00:00:00
-    //@Scheduled(cron = "0 42 16 * * *")  // 오늘 14:25:00에 실행
+    //@Scheduled(cron = "0 0 0 * * *")  // 매일 00:00:00
+    @Scheduled(fixedRate = 30000)
     public void saveDailyMetricsToDB() {
         log.info("Starting daily metrics batch job...");
 
-        LocalDate yesterday = LocalDate.now().minusDays(1);
+        //TODO: 배포시 어제로 다시 바꿔놓기. 지금은 오늘로 되어 있음
+        LocalDate yesterday = LocalDate.now();
+//                .minusDays(1);
         String keyPattern = REDIS_KEY_PREFIX + "*:" + yesterday;
 
         // Redis에서 어제 날짜의 모든 키 조회
@@ -120,8 +125,22 @@ public class DailyMetricsBatchService {
                     categoryUsageRepository.saveAll(categoryUsages);
                 }
 
-                // Redis 데이터 삭제
-                redisTemplate.delete(redisKey);
+                // 3. SNS 인사이트 계산 및 저장
+                try {
+                    snsInsightService.calculateAndSave(subjectId, yesterday);
+                    log.debug("SNS insight calculated for subject: {}, date: {}", subjectId, yesterday);
+                } catch (Exception e) {
+                    log.error("Failed to calculate SNS insight for subject: {}, date: {}", subjectId, yesterday, e);
+                }
+
+                // 4. 이벤트 발행
+                DailyMetricsSaved event = new DailyMetricsSaved(metrics);
+                eventPublisher.publish("produceDailyMetricsSaved", event, "DailyMetricsSaved");
+                log.info("Published DailyMetricsSaved event for subject: {}, date: {}", subjectId, yesterday);
+
+                //TODO: 배포시 되돌려 놓기
+//                // Redis 데이터 삭제
+//                redisTemplate.delete(redisKey);
 
                 savedCount++;
                 log.debug("Saved metrics for subject: {}, date: {}", subjectId, yesterday);
