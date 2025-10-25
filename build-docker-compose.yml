@@ -35,6 +35,23 @@ services:
       timeout: 5s
       retries: 5
 
+  insightservice-db:
+    image: postgres:16
+    container_name: insightservice-db
+    environment:
+      POSTGRES_DB: insightservice
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - insightservice_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   redis:
     image: redis:7-alpine
     container_name: redis
@@ -96,6 +113,8 @@ services:
         condition: service_started
       usageservice:
         condition: service_started
+      insightservice:
+        condition: service_started
     build:
       context: ./gateway
       dockerfile: Dockerfile
@@ -122,18 +141,20 @@ services:
       - POSTGRES_HOST=userservice-db
     ports:
       - "8081:8080"
-      
-#  insightservice:
-#    depends_on:
-#      - kafka
-#    build:
-#      context: ./InsightService
-#      dockerfile: Dockerfile
-#    environment:
-#      - SPRING_PROFILES_ACTIVE=docker
-#    ports:
-#      - 8083:8080
-      
+
+  insightservice:
+    depends_on:
+      - kafka
+      - insightservice-db
+    build:
+      context: ./InsightService
+      dockerfile: Dockerfile
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - POSTGRES_HOST=insightservice-db
+    ports:
+      - "8083:8080"
+
   usageservice:
     depends_on:
       - kafka
@@ -152,6 +173,7 @@ services:
 volumes:
   userservice_data:
   usageservice_data:
+  insightservice_data:
   redis_data:
   kafka-data:
 

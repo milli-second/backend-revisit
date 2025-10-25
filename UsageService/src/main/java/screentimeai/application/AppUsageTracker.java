@@ -654,7 +654,7 @@ public class AppUsageTracker {
             hourlyMinutes[hour] = usage != null ? Integer.parseInt(usage.toString()) : 0;
         }
 
-        int maxTwoHourUsage = -1;
+        int maxTwoHourUsage = 0;  // Changed from -1: only update when there's actual usage
         int mostActiveHourStart = -1;
 
         for (int i = 0; i < 23; i++) {

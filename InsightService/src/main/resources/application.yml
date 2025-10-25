@@ -2,14 +2,25 @@ spring:
   application:
     name: insightservice
 
+  datasource:
+    url: jdbc:postgresql://localhost:5434/insightservice
+    driver-class-name: org.postgresql.Driver
+    username: postgres
+    password: postgres
+
   jpa:
+    hibernate:
+      ddl-auto: update
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         show_sql: true
         format_sql: true
         implicit_naming_strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyComponentPathImpl
 
   cloud:
+    function:
+      definition: consumeDailyMetricsSaved
     stream:
       kafka:
         binder:
@@ -23,6 +34,10 @@ spring:
                 value:
                   serde: org.apache.kafka.common.serialization.Serdes$StringSerde
       bindings:
+        consumeDailyMetricsSaved-in-0:
+          group: insightservice
+          destination: daily_metrics_saved
+          contentType: application/json
         event-in:
           group: insightservice
           destination: screentimeai
@@ -36,6 +51,22 @@ logging:
     org.hibernate.type: trace
     org.springframework.cloud: debug
 
+springdoc:
+  api-docs:
+    path: /insights/v3/api-docs
+  swagger-ui:
+    path: /insights/swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  show-actuator: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+      base-path: /actuator
+
 ---
 # 로컬 개발 환경
 spring:
@@ -46,6 +77,13 @@ spring:
 server:
   port: 8083
 
+openai:
+  api-key: ${OPENAI_API_KEY:your-api-key-here}
+  api-url: https://api.openai.com/v1/chat/completions
+  model: gpt-3.5-turbo
+  temperature: 0.7
+  max-tokens: 150
+
 ---
 # Docker/Kubernetes 환경
 spring:
@@ -53,13 +91,23 @@ spring:
     activate:
       on-profile: docker
 
-server:
-  port: 8080
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://insightservice-postgres-0.insightservice-postgres.db.svc.cluster.local:5432/insightservice_db}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
 
   cloud:
     stream:
       kafka:
         binder:
-          brokers: kafka:9092
+          brokers: ${SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS:kafka-0.kafka.db.svc.cluster.local:9092}
+          configuration:
+            security.protocol: PLAINTEXT
 
+springdoc:
+  swagger-ui:
+    server-url: ${SPRINGDOC_SWAGGER_UI_SERVER_URL:}
+
+server:
+  port: 8080
 

@@ -30,6 +30,9 @@ public class DailyCategoryUsage {
     @Column(name = "category_id", nullable = false)
     private Integer categoryId;
 
+    @Column(name = "category_code", length = 50)
+    private String categoryCode;
+
     @Column(name = "usage_minutes")
     private Integer usageMinutes;
 }

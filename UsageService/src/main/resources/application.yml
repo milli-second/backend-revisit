@@ -21,8 +21,8 @@ spring:
   cloud:
     stream:
       bindings:
-        screenData-out-0:
-          destination: usage_events
+        produceDailyMetricsSaved:
+          destination: daily_metrics_saved
           contentType: application/json
       kafka:
         binder:

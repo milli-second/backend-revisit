@@ -95,9 +95,23 @@ CREATE TABLE IF NOT EXISTS daily_category_usage (
     summary_date DATE NOT NULL,
     category_id INTEGER NOT NULL,
     usage_minutes INTEGER,
+    category_code VARCHAR(50),
     PRIMARY KEY (subject_id, summary_date, category_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_daily_category_date ON daily_category_usage(summary_date);
 CREATE INDEX IF NOT EXISTS idx_daily_category_subject ON daily_category_usage(subject_id);
+
+-- User SNS Insight 테이블 생성
+CREATE TABLE IF NOT EXISTS user_sns_insight (
+    subject_id UUID NOT NULL,
+    calculated_date DATE NOT NULL,
+    sns_usage_rate FLOAT,        -- 전체 사용시간 중 SNS 비율 (%)
+    dawn_access_rate FLOAT,      -- SNS 사용시간 중 새벽 접속 비율 (%)
+    total_sns_minutes INTEGER,   -- SNS 총 사용시간 (분)
+    PRIMARY KEY (subject_id, calculated_date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_sns_insight_date ON user_sns_insight(calculated_date);
+CREATE INDEX IF NOT EXISTS idx_sns_insight_subject ON user_sns_insight(subject_id);
 
