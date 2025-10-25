@@ -61,11 +61,12 @@ public class InsightController {
                     description = "데이터 없음"
             )
     })
-    @GetMapping("/behavior-patterns/{userId}")
+    @io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "JWT Authentication")
+    @GetMapping("/behavior-patterns")
     public ResponseEntity<List<BehaviorPatternResponse>> getBehaviorPatterns(
-            @Parameter(description = "사용자 ID (UUID)", required = true, example = "123e4567-e89b-12d3-a456-426614174000")
-            @PathVariable String userId) {
-        log.info("GET /insights/behavior-patterns/{}", userId);
+            @Parameter(description = "사용자 ID (JWT에서 자동 추출)", hidden = true)
+            @RequestHeader("X-User-Id") String userId) {
+        log.info("GET /insights/behavior-patterns for user: {}", userId);
 
         UUID subjectId = UUID.fromString(userId);
         List<BehaviorPatternResponse> patterns = behaviorPatternService.getWeeklyBehaviorPatterns(subjectId);
@@ -107,11 +108,12 @@ public class InsightController {
                     description = "데이터 없음"
             )
     })
-    @GetMapping("/content-preferences/{userId}")
+    @io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "JWT Authentication")
+    @GetMapping("/content-preferences")
     public ResponseEntity<List<ContentPreferenceResponse>> getContentPreferences(
-            @Parameter(description = "사용자 ID (UUID)", required = true, example = "123e4567-e89b-12d3-a456-426614174000")
-            @PathVariable String userId) {
-        log.info("GET /insights/content-preferences/{}", userId);
+            @Parameter(description = "사용자 ID (JWT에서 자동 추출)", hidden = true)
+            @RequestHeader("X-User-Id") String userId) {
+        log.info("GET /insights/content-preferences for user: {}", userId);
 
         UUID subjectId = UUID.fromString(userId);
         List<ContentPreferenceResponse> preferences = contentPreferenceService.getWeeklyContentPreferences(subjectId);

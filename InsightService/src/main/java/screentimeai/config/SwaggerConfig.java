@@ -1,8 +1,11 @@
 package screentimeai.config;
 
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.Contact;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -19,6 +22,18 @@ public class SwaggerConfig {
 
     @Bean
     public OpenAPI insightServiceAPI() {
+        // JWT 인증 스키마 정의
+        String jwtSchemeName = "JWT Authentication";
+        SecurityRequirement securityRequirement = new SecurityRequirement().addList(jwtSchemeName);
+
+        Components components = new Components()
+                .addSecuritySchemes(jwtSchemeName, new SecurityScheme()
+                        .name(jwtSchemeName)
+                        .type(SecurityScheme.Type.HTTP)
+                        .scheme("bearer")
+                        .bearerFormat("JWT")
+                        .description("JWT 토큰을 입력하세요. 'Bearer ' 접두사는 자동으로 추가됩니다."));
+
         // 서버 URL 설정 - 환경 변수로 설정 가능하도록 함
         List<Server> servers = new ArrayList<>();
         if (swaggerServerUrl != null && !swaggerServerUrl.isEmpty()) {
@@ -46,15 +61,17 @@ public class SwaggerConfig {
                                 "   - LEARNING_FOCUSED: 학습 중심\n" +
                                 "   - ENTERTAINMENT_FOCUSED: 엔터테인먼트 중심\n" +
                                 "   - BALANCED: 균형잡힌 사용\n\n" +
-                                "## API 사용법\n" +
-                                "1. GET `/insights/daily-patterns/{userId}`: 요일별 패턴 조회 (어제부터 7일치)\n\n" +
-                                "## 인증\n" +
-                                "이 서비스는 Gateway/Istio 레벨에서 JWT 인증을 수행합니다.\n" +
-                                "직접 호출 시 인증 헤더가 필요하지 않습니다.")
+                                "## 인증 방법\n" +
+                                "1. UserService의 `/users/login` 엔드포인트를 통해 JWT 토큰을 발급받습니다.\n" +
+                                "2. 우측 상단의 'Authorize' 버튼을 클릭합니다.\n" +
+                                "3. 발급받은 토큰을 입력합니다. (Bearer 접두사 제외)\n" +
+                                "4. Gateway를 통해 API를 테스트할 수 있습니다.")
                         .version("1.0.0")
                         .contact(new Contact()
                                 .name("Screen Time AI Team")
                                 .email("crispylemon7120@gmail.com")))
-                .servers(servers);
+                .servers(servers)
+                .addSecurityItem(securityRequirement)
+                .components(components);
     }
 }

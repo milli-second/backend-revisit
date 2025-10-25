@@ -1,12 +1,26 @@
 server:
   port: 8088
 
+jwt:
+  secret: ${JWT_SECRET_KEY:my-default-secret7e9f3b4c5d7c5d8e4f12a9ec17f1f4d29c6b1f8a2}
+
 spring:
   application:
     name: gateway
   cloud:
     gateway:
       routes:
+        # Swagger 문서 접근 (인증 불필요)
+        - id: usageservice-docs
+          uri: ${USAGESERVICE_URI:http://localhost:8082}
+          predicates:
+            - Path=/usage/v3/api-docs/**,/usage/swagger-ui/**,/usage/swagger-ui.html
+        - id: insightservice-docs
+          uri: ${INSIGHTSERVICE_URI:http://localhost:8083}
+          predicates:
+            - Path=/insights/v3/api-docs/**,/insights/swagger-ui/**,/insights/swagger-ui.html
+
+        # 일반 API 접근 (JWT 인증 필요)
         - id: userservice
           uri: ${USERSERVICE_URI:http://localhost:8081}
           predicates:
@@ -15,10 +29,14 @@ spring:
           uri: ${USAGESERVICE_URI:http://localhost:8082}
           predicates:
             - Path=/usage/**
+          filters:
+            - JwtAuthenticationFilter
         - id: insightservice
           uri: ${INSIGHTSERVICE_URI:http://localhost:8083}
           predicates:
             - Path=/insights/**
+          filters:
+            - JwtAuthenticationFilter
 #        - id: frontend
 #          uri: ${FRONTEND_URI:http://localhost:8080}
 #          predicates:

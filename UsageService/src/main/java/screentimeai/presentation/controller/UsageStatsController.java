@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,10 +40,12 @@ public class UsageStatsController {
         summary = "실시간 Top 3 앱 조회",
         description = "특정 사용자의 현재 시간 기준 24시간 실시간 Top 3 앱 사용 통계를 Redis에서 조회합니다."
     )
-    @GetMapping("/top3/{subjectId}")
+    @SecurityRequirement(name = "JWT Authentication")
+    @GetMapping("/top3")
     public ResponseEntity<List<TopApp>> getTop3Apps(
-            @Parameter(description = "사용자 ID (UUID)", required = true, example = "550e8400-e29b-41d4-a716-446655440000")
-            @PathVariable UUID subjectId) {
+            @Parameter(description = "사용자 ID (JWT에서 자동 추출)", hidden = true)
+            @RequestHeader("X-User-Id") String userId) {
+        UUID subjectId = UUID.fromString(userId);
         log.info("Fetching top 3 apps for subjectId: {}", subjectId);
 
         List<TopApp> topApps = metricsAggregator.getTop3Apps(subjectId);
@@ -62,10 +65,12 @@ public class UsageStatsController {
         summary = "7일치 사용 패턴 조회",
         description = "특정 사용자의 최근 7일간(어제부터 7일치) 일별 총 사용 시간을 DB에서 조회합니다."
     )
-    @GetMapping("/weekly/{subjectId}")
+    @SecurityRequirement(name = "JWT Authentication")
+    @GetMapping("/weekly")
     public ResponseEntity<List<DailyUsageResponse>> getWeeklyUsagePattern(
-            @Parameter(description = "사용자 ID (UUID)", required = true, example = "550e8400-e29b-41d4-a716-446655440000")
-            @PathVariable UUID subjectId) {
+            @Parameter(description = "사용자 ID (JWT에서 자동 추출)", hidden = true)
+            @RequestHeader("X-User-Id") String userId) {
+        UUID subjectId = UUID.fromString(userId);
         log.info("Fetching weekly usage pattern for subjectId: {}", subjectId);
 
         List<DailyUsageResponse> weeklyPattern = metricsAggregator.getWeeklyUsagePattern(subjectId);
@@ -90,10 +95,12 @@ public class UsageStatsController {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = CategoryUsageResponse.class))),
         @ApiResponse(responseCode = "404", description = "24시간 내 사용 기록 없음")
     })
-    @GetMapping("/category/{subjectId}")
+    @SecurityRequirement(name = "JWT Authentication")
+    @GetMapping("/category")
     public ResponseEntity<List<CategoryUsageResponse>> getCategoryUsage(
-            @Parameter(description = "사용자 ID (UUID)", required = true, example = "550e8400-e29b-41d4-a716-446655440000")
-            @PathVariable UUID subjectId) {
+            @Parameter(description = "사용자 ID (JWT에서 자동 추출)", hidden = true)
+            @RequestHeader("X-User-Id") String userId) {
+        UUID subjectId = UUID.fromString(userId);
         log.info("Fetching category usage for subjectId: {}", subjectId);
 
         List<CategoryUsageResponse> categoryUsage = metricsAggregator.getCategoryUsage(subjectId);
@@ -110,10 +117,12 @@ public class UsageStatsController {
         summary = "3일치 시간대별 사용 통계 조회",
         description = "어제, 그제는 DB, 오늘은 Redis에서 데이터를 가져와 시간대별 사용량을 반환합니다. 오늘 데이터 기준 가장 활발한 2시간의 시작 시간도 함께 반환합니다."
     )
-    @GetMapping("/3day/{subjectId}")
+    @SecurityRequirement(name = "JWT Authentication")
+    @GetMapping("/3day")
     public ResponseEntity<ThreeDayUsageResponse> getThreeDayUsage(
-            @Parameter(description = "사용자 ID (UUID)", required = true, example = "550e8400-e29b-41d4-a716-446655440000")
-            @PathVariable UUID subjectId) {
+            @Parameter(description = "사용자 ID (JWT에서 자동 추출)", hidden = true)
+            @RequestHeader("X-User-Id") String userId) {
+        UUID subjectId = UUID.fromString(userId);
         log.info("Fetching 3-day usage for subjectId: {}", subjectId);
 
         ThreeDayUsageResponse threeDayUsage = metricsAggregator.getThreeDayUsage(subjectId);
@@ -142,10 +151,12 @@ public class UsageStatsController {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = WeeklyTrendResponse.class))),
         @ApiResponse(responseCode = "404", description = "데이터 없음")
     })
-    @GetMapping("/weekly-trend/{subjectId}")
+    @SecurityRequirement(name = "JWT Authentication")
+    @GetMapping("/weekly-trend")
     public ResponseEntity<WeeklyTrendResponse> getWeeklyTrend(
-            @Parameter(description = "사용자 ID (UUID)", required = true, example = "550e8400-e29b-41d4-a716-446655440000")
-            @PathVariable UUID subjectId) {
+            @Parameter(description = "사용자 ID (JWT에서 자동 추출)", hidden = true)
+            @RequestHeader("X-User-Id") String userId) {
+        UUID subjectId = UUID.fromString(userId);
         log.info("Fetching weekly trend for subjectId: {}", subjectId);
 
         WeeklyTrendResponse weeklyTrend = weeklyTrendService.getWeeklyTrend(subjectId);

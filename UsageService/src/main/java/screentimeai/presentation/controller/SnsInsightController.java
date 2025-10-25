@@ -1,5 +1,6 @@
 package screentimeai.presentation.controller;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -31,11 +32,12 @@ public class SnsInsightController {
      * @param userId 사용자 ID
      * @return SNS 사용 비율 및 새벽 접속 비율
      */
-    @GetMapping("/{userId}")
-    public ResponseEntity<SnsInsightResponse> getSnsInsight(@PathVariable String userId) {
-        log.info("GET /api/usage/{}", userId);
-
+    @SecurityRequirement(name = "JWT Authentication")
+    @GetMapping
+    public ResponseEntity<SnsInsightResponse> getSnsInsight(
+            @RequestHeader("X-User-Id") String userId) {
         UUID subjectId = UUID.fromString(userId);
+        log.info("GET /usage/insight for user: {}", subjectId);
 
         return snsInsightService.getYesterdayInsight(subjectId)
                 .map(insight -> ResponseEntity.ok(toResponse(insight)))
