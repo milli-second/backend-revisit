@@ -33,6 +33,7 @@ public class CategoryMappingService {
     public static final String CATEGORY_NAME_OTHER = "OTHER";
 
     private final Map<String, Integer> packageToCategoryMap = new HashMap<>();
+    private final Map<String, String> packageToCategoryCodeMap = new HashMap<>();
 
     /**
      * 애플리케이션 시작 시 CSV 파일을 로드하여 매핑 테이블 구성
@@ -73,6 +74,7 @@ public class CategoryMappingService {
 
                 int categoryId = mapCategoryCodeToCategoryId(categoryCode);
                 packageToCategoryMap.put(packageName, categoryId);
+                packageToCategoryCodeMap.put(packageName, categoryCode);
             }
         }
     }
@@ -130,5 +132,17 @@ public class CategoryMappingService {
     public boolean isSocialApp(String packageName) {
         int categoryId = getCategoryId(packageName);
         return isSocialCategory(categoryId);
+    }
+
+    /**
+     * Package name으로 원본 Google Play 카테고리 코드 조회
+     * @param packageName 패키지명
+     * @return 카테고리 코드 (예: GAME, SOCIAL, ART_AND_DESIGN 등)
+     */
+    public String getCategoryCode(String packageName) {
+        if (packageName == null || packageName.isEmpty()) {
+            return "OTHER";
+        }
+        return packageToCategoryCodeMap.getOrDefault(packageName, "OTHER");
     }
 }

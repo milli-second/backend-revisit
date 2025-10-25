@@ -16,6 +16,8 @@ import screentimeai.presentation.dto.DailyUsageResponse;
 import screentimeai.application.DailyMetricsAggregator;
 import screentimeai.presentation.dto.ThreeDayUsageResponse;
 import screentimeai.presentation.dto.TopApp;
+import screentimeai.domain.dto.WeeklyTrendResponse;
+import screentimeai.domain.service.WeeklyTrendService;
 
 import java.util.List;
 import java.util.UUID;
@@ -28,6 +30,7 @@ import java.util.UUID;
 public class UsageStatsController {
 
     private final DailyMetricsAggregator metricsAggregator;
+    private final WeeklyTrendService weeklyTrendService;
 
     /**
      * 실시간 통계 조회 API (현재 시간 기준 24시간)
@@ -121,5 +124,38 @@ public class UsageStatsController {
         }
 
         return ResponseEntity.ok(threeDayUsage);
+    }
+
+    /**
+     * 주간 변화 트렌드 조회 API
+     * - 어제(D-1) vs 최근 7일(D-2~D-8) 평균 비교
+     * - 총 사용시간 변화 + 카테고리별 변화 TOP 3 (절대값 기준)
+     */
+    @Operation(
+        summary = "주간 변화 트렌드 조회",
+        description = "어제와 최근 7일 평균을 비교한 주간 변화 트렌드를 조회합니다. " +
+                "총 사용시간 변화와 카테고리별 변화율이 큰 TOP 3를 반환합니다. " +
+                "카테고리는 원본 Google Play 카테고리(GAME, SOCIAL, ART_AND_DESIGN 등)입니다."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "주간 변화 트렌드 조회 성공",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = WeeklyTrendResponse.class))),
+        @ApiResponse(responseCode = "404", description = "데이터 없음")
+    })
+    @GetMapping("/weekly-trend/{subjectId}")
+    public ResponseEntity<WeeklyTrendResponse> getWeeklyTrend(
+            @Parameter(description = "사용자 ID (UUID)", required = true, example = "550e8400-e29b-41d4-a716-446655440000")
+            @PathVariable UUID subjectId) {
+        log.info("Fetching weekly trend for subjectId: {}", subjectId);
+
+        WeeklyTrendResponse weeklyTrend = weeklyTrendService.getWeeklyTrend(subjectId);
+
+        if (weeklyTrend.getTop3Categories().isEmpty() &&
+                weeklyTrend.getTotalUsageChange().getYesterdayMinutes() == 0) {
+            log.warn("No weekly trend data found for subjectId: {}", subjectId);
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(weeklyTrend);
     }
 }

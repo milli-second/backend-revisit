@@ -27,6 +27,7 @@ public class DailyMetricsBatchService {
     private final AppUsageTracker appUsageTracker;
     private final AbstractEventPublisher eventPublisher;
     private final SnsInsightService snsInsightService;
+    private final CategoryMappingService categoryMappingService;
 
     private static final String REDIS_KEY_PREFIX = "daily_metrics:";
 
@@ -181,23 +182,52 @@ public class DailyMetricsBatchService {
     }
 
     /**
-     * Redis 데이터에서 카테고리별 사용량 추출
+     * Redis 데이터에서 카테고리별 사용량 추출 (원본 Google Play 카테고리 코드 포함)
      */
     private List<DailyCategoryUsage> extractCategoryUsages(UUID subjectId, LocalDate date,
                                                             Map<Object, Object> redisData) {
-        List<DailyCategoryUsage> usages = new ArrayList<>();
+        // 패키지별 사용량을 원본 카테고리 코드로 그룹화
+        Map<String, Integer> categoryCodeUsage = new HashMap<>();
+        Map<String, Integer> categoryIdMap = new HashMap<>();
 
-        for (int categoryId = 1; categoryId <= 5; categoryId++) {
-            int usageMinutes = getIntValue(redisData, "category_" + categoryId);
-            if (usageMinutes > 0) {
-                DailyCategoryUsage usage = DailyCategoryUsage.builder()
-                        .subjectId(subjectId)
-                        .summaryDate(date)
-                        .categoryId(categoryId)
-                        .usageMinutes(usageMinutes)
-                        .build();
-                usages.add(usage);
+        for (Map.Entry<Object, Object> entry : redisData.entrySet()) {
+            String key = entry.getKey().toString();
+
+            // "app:{packageName}:{appName}" 형식의 키 찾기
+            if (key.startsWith("app:")) {
+                String[] parts = key.split(":", 3);
+                if (parts.length >= 2) {
+                    String packageName = parts[1];
+                    int usageMinutes = getIntValue(redisData, key);
+
+                    if (usageMinutes > 0) {
+                        // 원본 카테고리 코드 조회
+                        String categoryCode = categoryMappingService.getCategoryCode(packageName);
+                        int categoryId = categoryMappingService.getCategoryId(packageName);
+
+                        // 카테고리별로 합산
+                        categoryCodeUsage.merge(categoryCode, usageMinutes, Integer::sum);
+                        categoryIdMap.put(categoryCode, categoryId);
+                    }
+                }
             }
+        }
+
+        // DailyCategoryUsage 리스트 생성
+        List<DailyCategoryUsage> usages = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : categoryCodeUsage.entrySet()) {
+            String categoryCode = entry.getKey();
+            int usageMinutes = entry.getValue();
+            int categoryId = categoryIdMap.get(categoryCode);
+
+            DailyCategoryUsage usage = DailyCategoryUsage.builder()
+                    .subjectId(subjectId)
+                    .summaryDate(date)
+                    .categoryId(categoryId)
+                    .categoryCode(categoryCode)
+                    .usageMinutes(usageMinutes)
+                    .build();
+            usages.add(usage);
         }
 
         return usages;
@@ -410,9 +440,11 @@ public class DailyMetricsBatchService {
             if (existing.isPresent()) {
                 DailyCategoryUsage merged = existing.get();
                 merged.setUsageMinutes(merged.getUsageMinutes() + newUsage.getUsageMinutes());
+                // categoryCode도 업데이트 (혹시 변경되었을 경우를 대비)
+                merged.setCategoryCode(newUsage.getCategoryCode());
                 categoryUsageRepository.save(merged);
-                log.debug("Merged category usage: categoryId={}, oldMinutes={}, newMinutes={}, total={}",
-                        newUsage.getCategoryId(), existing.get().getUsageMinutes(),
+                log.debug("Merged category usage: categoryId={}, categoryCode={}, oldMinutes={}, newMinutes={}, total={}",
+                        newUsage.getCategoryId(), newUsage.getCategoryCode(), existing.get().getUsageMinutes(),
                         newUsage.getUsageMinutes(), merged.getUsageMinutes());
             } else {
                 categoryUsageRepository.save(newUsage);

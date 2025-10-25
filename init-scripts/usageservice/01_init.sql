@@ -95,6 +95,7 @@ CREATE TABLE IF NOT EXISTS daily_category_usage (
     summary_date DATE NOT NULL,
     category_id INTEGER NOT NULL,
     usage_minutes INTEGER,
+    category_code VARCHAR(50),
     PRIMARY KEY (subject_id, summary_date, category_id)
 );
 
