@@ -73,6 +73,7 @@ public class InsightPersistenceService {
                 .morningMinutes(metrics.getMorningMinutes())
                 .afternoonMinutes(metrics.getAfternoonMinutes())
                 .eveningMinutes(metrics.getEveningMinutes())
+                .mostActiveHourStart(metrics.getMostActiveHourStart())
                 .build();
 
         dailySummaryRepository.save(summary);

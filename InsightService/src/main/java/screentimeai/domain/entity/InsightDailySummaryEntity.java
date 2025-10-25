@@ -41,4 +41,7 @@ public class InsightDailySummaryEntity {
 
     @Column(name = "evening_minutes")
     private Integer eveningMinutes;
+
+    @Column(name = "most_active_hour_start")
+    private Integer mostActiveHourStart;
 }

@@ -11,8 +11,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import screentimeai.presentation.dto.AiInsightResponse;
 import screentimeai.presentation.dto.BehaviorPatternResponse;
 import screentimeai.presentation.dto.ContentPreferenceResponse;
+import screentimeai.application.service.AiInsightService;
 import screentimeai.application.service.BehaviorPatternService;
 import screentimeai.application.service.ContentPreferenceService;
 
@@ -33,6 +35,7 @@ public class InsightController {
 
     private final BehaviorPatternService behaviorPatternService;
     private final ContentPreferenceService contentPreferenceService;
+    private final AiInsightService aiInsightService;
 
     /**
      * 어제부터 7일간의 행동 패턴 조회
@@ -123,5 +126,58 @@ public class InsightController {
         }
 
         return ResponseEntity.ok(preferences);
+    }
+
+    /**
+     * AI 기반 인사이트 요약 조회
+     *
+     * @param userId 사용자 ID
+     * @return AI가 생성한 인사이트 요약
+     */
+    @Operation(
+            summary = "AI 인사이트 요약 조회",
+            description = "최근 7일간의 요일별 사용량 패턴을 분석하여 " +
+                    "AI가 생성한 한 줄 인사이트를 제공합니다.\n\n" +
+                    "**분석 데이터**:\n" +
+                    "- 요일별 총 사용시간 및 픽업 횟수 (우선)\n" +
+                    "- 행동 패턴 (별도 API에서 제공)\n" +
+                    "- 콘텐츠 선호 (별도 API에서 제공)\n\n" +
+                    "**응답 형식**:\n" +
+                    "- ~요 체 사용 (예: ~해요, ~있어요)\n" +
+                    "- 이모지 없음\n" +
+                    "- 요일별 패턴 중심\n" +
+                    "- 1-2문장으로 핵심만 전달\n\n" +
+                    "**응답 예시**:\n" +
+                    "- \"목요일에 사용량이 최대치를 기록했어요.\"\n" +
+                    "- \"주말보다 평일에 스마트폰 사용이 더 많아요.\"\n" +
+                    "- \"월요일에 픽업 횟수가 가장 높았어요.\"\n" +
+                    "- 데이터 부족: \"분석할 데이터가 충분하지 않습니다.\""
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = AiInsightResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "데이터 없음"
+            )
+    })
+    @io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "JWT Authentication")
+    @GetMapping("/ai-summary")
+    public ResponseEntity<AiInsightResponse> getAiInsightSummary(
+            @Parameter(description = "사용자 ID (JWT에서 자동 추출)", hidden = true)
+            @RequestHeader("X-User-Id") String userId) {
+        log.info("GET /insights/ai-summary for user: {}", userId);
+
+        UUID subjectId = UUID.fromString(userId);
+        String summary = aiInsightService.generateInsightSummary(subjectId);
+
+        AiInsightResponse response = AiInsightResponse.builder()
+                .summary(summary)
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 }
