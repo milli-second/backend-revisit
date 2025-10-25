@@ -1,10 +1,10 @@
-package screentimeai.domain.service;
+package screentimeai.application.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import screentimeai.domain.dto.ContentPreferenceResponse;
+import screentimeai.presentation.dto.ContentPreferenceResponse;
 import screentimeai.domain.entity.UserClassificationEntity;
 import screentimeai.domain.model.UserClassification;
 import screentimeai.infra.repository.UserClassificationRepository;

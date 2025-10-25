@@ -1,16 +1,4 @@
-package screentimeai.infra;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.BeanUtils;
-import org.springframework.messaging.MessageChannel;
-import org.springframework.messaging.MessageHeaders;
-import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.springframework.util.MimeTypeUtils;
-import screentimeai.InsightserviceApplication;
-import screentimeai.config.kafka.KafkaProcessor;
+package screentimeai.infra.event;
 
 //<<< Clean Arch / Outbound Adaptor
 public class AbstractEvent {

@@ -1,7 +1,4 @@
-package screentimeai.config.kafka;
-
-import org.springframework.messaging.MessageChannel;
-import org.springframework.messaging.SubscribableChannel;
+package screentimeai.infra.kafka;
 
 public interface KafkaProcessor {
     String INPUT = "event-in";

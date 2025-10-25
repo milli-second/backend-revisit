@@ -1,4 +1,4 @@
-package screentimeai.domain.service;
+package screentimeai.application.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +9,7 @@ import screentimeai.domain.entity.InsightDailyCategoryMetricsEntity;
 import screentimeai.domain.entity.InsightDailySummaryEntity;
 import screentimeai.domain.entity.UserClassificationEntity;
 import screentimeai.domain.model.UserClassification;
+import screentimeai.domain.service.UserClassificationService;
 import screentimeai.infra.repository.InsightDailyCategoryMetricsRepository;
 import screentimeai.infra.repository.InsightDailySummaryRepository;
 import screentimeai.infra.repository.UserClassificationRepository;

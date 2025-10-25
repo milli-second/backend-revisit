@@ -1,4 +1,4 @@
-package screentimeai.domain.dto;
+package screentimeai.presentation.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

@@ -1,4 +1,4 @@
-package screentimeai.infra.controller;
+package screentimeai.presentation.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -11,10 +11,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import screentimeai.domain.dto.BehaviorPatternResponse;
-import screentimeai.domain.dto.ContentPreferenceResponse;
-import screentimeai.domain.service.BehaviorPatternService;
-import screentimeai.domain.service.ContentPreferenceService;
+import screentimeai.presentation.dto.BehaviorPatternResponse;
+import screentimeai.presentation.dto.ContentPreferenceResponse;
+import screentimeai.application.service.BehaviorPatternService;
+import screentimeai.application.service.ContentPreferenceService;
 
 import java.util.List;
 import java.util.UUID;
