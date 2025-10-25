@@ -1,5 +1,6 @@
 package screentimeai.presentation.controller;
 
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,13 +29,11 @@ public class SnsInsightController {
 
     /**
      * 어제 날짜 기준 SNS 인사이트 조회
-     *
-     * @param userId 사용자 ID
-     * @return SNS 사용 비율 및 새벽 접속 비율
      */
     @SecurityRequirement(name = "JWT Authentication")
     @GetMapping
     public ResponseEntity<SnsInsightResponse> getSnsInsight(
+            @Parameter(description = "사용자 ID (JWT에서 자동 추출)", hidden = true)
             @RequestHeader("X-User-Id") String userId) {
         UUID subjectId = UUID.fromString(userId);
         log.info("GET /usage/insight for user: {}", subjectId);
