@@ -244,19 +244,30 @@ public class DailyMetricsBatchService {
         return Integer.parseInt(value.toString());
     }
 
+    /**
+     * 가장 활발한 2시간 연속 사용 구간의 시작 시간 계산
+     * @return 2시간 윈도우 시작 시간 (0-22), 사용량이 없으면 null
+     */
     private Integer calculateMostActiveHour(Map<Object, Object> data) {
-        int maxUsage = 0;
-        int mostActiveHour = 0;
-
+        // Extract hourly usage data (0-23)
+        int[] hourlyMinutes = new int[24];
         for (int hour = 0; hour < 24; hour++) {
-            int usage = getIntValue(data, "hour_" + hour);
-            if (usage > maxUsage) {
-                maxUsage = usage;
-                mostActiveHour = hour;
+            hourlyMinutes[hour] = getIntValue(data, "hour_" + hour);
+        }
+
+        // Find max 2-hour window
+        int maxTwoHourUsage = 0;  // Changed from -1: only update when there's actual usage
+        int mostActiveHourStart = -1;
+
+        for (int i = 0; i < 23; i++) {
+            int twoHourUsage = hourlyMinutes[i] + hourlyMinutes[i+1];
+            if (twoHourUsage > maxTwoHourUsage) {
+                maxTwoHourUsage = twoHourUsage;
+                mostActiveHourStart = i;
             }
         }
 
-        return maxUsage > 0 ? mostActiveHour : null;
+        return mostActiveHourStart != -1 ? mostActiveHourStart : null;
     }
 
     private Float calculateCategoryRatio(Map<Object, Object> data, int categoryId, int totalMinutes) {
