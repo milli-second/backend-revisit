@@ -163,7 +163,6 @@ public class UserService {
         return newTokenInfo;
     }
 
-
     public void logout(String accessToken) {
         String uuid = jwtUtil.getUuidFromToken(accessToken);
         User user = userRepository.findBySubject_id(uuid)
@@ -204,10 +203,9 @@ public class UserService {
         System.out.println("✅ User logout completed: " + user.getNickname());
     }
 
-    public void changeNickname(String accessToken, String newNickname) {
-        String uuid = jwtUtil.getUuidFromToken(accessToken);
-        User user = userRepository.findBySubject_id(uuid)
-                .orElseThrow(() -> new IllegalArgumentException("❌ 사용자 없음: " + uuid));
+    public void changeNickname(String subjectId, String newNickname) {
+        User user = userRepository.findBySubject_id(subjectId)
+                .orElseThrow(() -> new IllegalArgumentException("❌ 사용자 없음: " + subjectId));
 
         if (userRepository.existsByNickname(newNickname)) {
             throw new IllegalArgumentException("❌ 이미 사용 중인 닉네임입니다: " + newNickname);
@@ -227,10 +225,9 @@ public class UserService {
         System.out.println("✅ Nickname changed from " + user.getNickname() + " → " + newNickname);
     }
 
-    public void changePassword(String accessToken, String oldPassword, String newPassword) {
-        String uuid = jwtUtil.getUuidFromToken(accessToken);
-        User user = userRepository.findBySubject_id(uuid)
-                .orElseThrow(() -> new IllegalArgumentException("❌ 사용자 없음: " + uuid));
+    public void changePassword(String subjectId, String oldPassword, String newPassword) {
+        User user = userRepository.findBySubject_id(subjectId)
+                .orElseThrow(() -> new IllegalArgumentException("❌ 사용자 없음: " + subjectId));
 
         user.changePassword(oldPassword, newPassword, passwordEncoder);
         userRepository.save(user);
@@ -250,10 +247,9 @@ public class UserService {
     }
 
     @Transactional
-    public void changeProfileImage(String accessToken, int newProfileImageNumber) {
-        String uuid = jwtUtil.getUuidFromToken(accessToken);
-        User user = userRepository.findBySubject_id(uuid)
-                .orElseThrow(() -> new IllegalArgumentException("❌ 사용자 없음: " + uuid));
+    public void changeProfileImage(String subjectId, int newProfileImageNumber) {
+        User user = userRepository.findBySubject_id(subjectId)
+                .orElseThrow(() -> new IllegalArgumentException("❌ 사용자 없음: " + subjectId));
 
         if (newProfileImageNumber < 1 || newProfileImageNumber > 8) {
             throw new IllegalArgumentException("프로필 이미지 번호는 1~8 사이여야 합니다.");
@@ -291,10 +287,9 @@ public class UserService {
         System.out.println("🗑️ Account deactivated: " + nickname);
     }
 
-    public UserInfoResponse getUserInfo(String accessToken) {
-        String uuid = jwtUtil.getUuidFromToken(accessToken);
-        User user = userRepository.findBySubject_id(uuid)
-                .orElseThrow(() -> new IllegalArgumentException("❌ 사용자 없음: " + uuid));
+    public UserInfoResponse getUserInfo(String subjectId) {
+        User user = userRepository.findBySubject_id(subjectId)
+                .orElseThrow(() -> new IllegalArgumentException("❌ 사용자 없음: " + subjectId));
 
         return UserInfoResponse.builder()
                 .nickname(user.getNickname())

@@ -88,30 +88,23 @@ public class UserController {
     @PatchMapping("/change/nickname")
     @SecurityRequirement(name = "JWT Authentication")
     public ResponseEntity<String> changeNickname(
-            @Parameter(hidden = true) @RequestHeader("Authorization") String token,
+            @Parameter(hidden = true) @RequestHeader("X-User-Id") String subjectId,
             @Valid @RequestBody ChangeNicknameRequest request
     ) {
-        // 1️⃣ 토큰에서 기존 닉네임 추출 (이제 서비스에서 처리)
-        String accessToken = token.replace("Bearer ", "");
-
         // 2️⃣ 서비스 호출
-        userService.changeNickname(accessToken, request.getNewNickname());
+        userService.changeNickname(subjectId, request.getNewNickname());
         return ResponseEntity.ok("닉네임이 성공적으로 변경되었습니다.");
     }
-
 
     // ✅ 비밀번호 변경
     @PostMapping("/change/password")
     @SecurityRequirement(name = "JWT Authentication")
     public ResponseEntity<String> changePassword(
-            @Parameter(hidden = true) @RequestHeader("Authorization") String token,
+            @Parameter(hidden = true) @RequestHeader("X-User-Id") String subjectId,
             @Valid @RequestBody ChangePasswordRequest request
     ) {
-        // 1️⃣ 토큰에서 닉네임 추출 (이제 서비스에서 처리)
-        String accessToken = token.replace("Bearer ", "");
-
         // 2️⃣ 서비스 호출
-        userService.changePassword(accessToken, request.getOldPassword(), request.getNewPassword());
+        userService.changePassword(subjectId, request.getOldPassword(), request.getNewPassword());
 
         return ResponseEntity.ok("비밀번호가 성공적으로 변경되었습니다.");
     }
@@ -120,16 +113,11 @@ public class UserController {
     @PatchMapping("/change/profile-image")
     @SecurityRequirement(name = "JWT Authentication")
     public ResponseEntity<String> changeProfileImage(
-            @Parameter(hidden = true) @RequestHeader("Authorization") String token,
+            @Parameter(hidden = true) @RequestHeader("X-User-Id") String subjectId,
             @Valid @RequestBody ChangeProfileImageRequest request
     ) {
-        // 1️⃣ 토큰에서 닉네임 추출
-        String accessToken = token.replace("Bearer ", "");
-        String nickname = jwtUtil.getUsernameFromToken(accessToken);
-        System.out.println("nickname from token(change-profile-image): " + nickname);
-
         // 2️⃣ 서비스 호출 (→ 내부에서 Redis 인증)
-        userService.changeProfileImage(nickname, request.getProfileImageNumber());
+        userService.changeProfileImage(subjectId, request.getProfileImageNumber());
         return ResponseEntity.ok("프로필 이미지가 성공적으로 변경되었습니다.");
     }
 
@@ -137,9 +125,8 @@ public class UserController {
     @GetMapping("/me")
     @SecurityRequirement(name = "JWT Authentication")
     public ResponseEntity<UserInfoResponse> getUserInfo(
-            @Parameter(hidden = true) @RequestHeader("Authorization") String token) {
-        String accessToken = token.replace("Bearer ", "");
-        UserInfoResponse userInfo = userService.getUserInfo(accessToken);
+            @Parameter(hidden = true) @RequestHeader("X-User-Id") String subjectId) {
+        UserInfoResponse userInfo = userService.getUserInfo(subjectId);
         return ResponseEntity.ok(userInfo);
     }
 }

@@ -5,6 +5,7 @@ import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -62,9 +63,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 // ✅ 토큰 유효성 검사
                 if (jwtUtil.validateToken(token, username)) {
+                    String subjectId = jwtUtil.getUuidFromToken(token);
+                    HttpServletRequestWrapper wrapper = new HttpServletRequestWrapper(request) {
+                        @Override
+                        public String getHeader(String name) {
+                            if ("X-User-Id".equals(name)) {
+                                return subjectId;
+                            }
+                            return super.getHeader(name);
+                        }
+
+                        @Override
+                        public java.util.Enumeration<String> getHeaders(String name) {
+                            if ("X-User-Id".equals(name)) {
+                                return java.util.Collections.enumeration(java.util.Arrays.asList(subjectId));
+                            }
+                            return super.getHeaders(name);
+                        }
+                    };
+
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(username, null, null);
                     SecurityContextHolder.getContext().setAuthentication(authentication);
+                    filterChain.doFilter(wrapper, response);
+                    return;
                 } else {
                     setErrorResponse(response, HttpServletResponse.SC_FORBIDDEN, "유효하지 않은 토큰입니다.");
                     return;
