@@ -23,8 +23,8 @@ public class User {
     private String category = null;//초기에는 null처리
 
     @Column(unique = true, updatable = false, nullable = false)
-    private String subject_id; // 🔥 외부 참조용 글로벌 ID
-    private int profile_image_number = 1; // 기본값 1번 프로필
+    private String subjectId; // 🔥 외부 참조용 글로벌 ID
+    private int profileImageNumber = 1; // 기본값 1번 프로필
 
     // ✅ 자동으로 생성 및 갱신 시간 관리
     @CreationTimestamp
@@ -37,14 +37,14 @@ public class User {
     // ✅ 엔티티 생성 시 자동으로 UUID 부여
     @PrePersist
     public void prePersist() {
-        if (this.subject_id == null) {
-            this.subject_id = UUID.randomUUID().toString();
+        if (this.subjectId == null) {
+            this.subjectId = UUID.randomUUID().toString();
         }
     }
 
     public void signup(String rawPassword, PasswordEncoder encoder,int profileImageNumber) {
         this.password = encoder.encode(rawPassword);
-        this.profile_image_number = profileImageNumber; // ✅ 프로필 번호 설정
+        this.profileImageNumber = profileImageNumber; // ✅ 프로필 번호 설정
     }
 
     public void login(String rawPassword, PasswordEncoder encoder) {
@@ -80,7 +80,7 @@ public class User {
         if (newProfileImageNumber < 1 || newProfileImageNumber > 8) {
             throw new IllegalArgumentException("❌ 프로필 이미지 번호는 1~8 사이여야 합니다.");
         }
-        this.profile_image_number = newProfileImageNumber;
+        this.profileImageNumber = newProfileImageNumber;
     }
 
 

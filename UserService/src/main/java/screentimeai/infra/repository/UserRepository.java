@@ -9,6 +9,5 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByNickname(String nickname); // 중복 체크용
     Optional<User> findByNickname(String nickname); // ✅ 유저 조회용
-    @Query("SELECT u FROM User u WHERE u.subject_id = :subject_id")
-    Optional<User> findBySubject_id(String subject_id); // ✅ subject_id로 유저 조회용
+    Optional<User> findBySubjectId(String subjectId); // ✅ subjectId로 유저 조회용
 }

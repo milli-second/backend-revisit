@@ -9,13 +9,13 @@ import screentimeai.infra.AbstractEvent;
 @ToString
 public class SignedUp extends AbstractEvent {
     //private Long id;
-    private String subject_id;
+    private String subjectId;
     private String nickname;
     private String category;
 
-    public SignedUp(String subject_id, String nickname, String category) {
+    public SignedUp(String subjectId, String nickname, String category) {
         //this.id = id;
-        this.subject_id = subject_id;
+        this.subjectId = subjectId;
         this.nickname = nickname;
         this.category = category;
     }

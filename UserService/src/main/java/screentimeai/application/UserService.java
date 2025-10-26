@@ -40,12 +40,12 @@ public class UserService {
         }
         User user = new User();
         user.setNickname(nickname);
-        user.setProfile_image_number(profileImageNumber);
+        user.setProfileImageNumber(profileImageNumber);
         user.signup(rawPassword, passwordEncoder, profileImageNumber);
         userRepository.save(user);
         // ✅ UUID가 설정된 후 SignedUp 이벤트 명시적 발행
         try {
-            String signedUpEventJson = objectMapper.writeValueAsString(new SignedUp(user.getSubject_id(), user.getNickname(), user.getCategory()));
+            String signedUpEventJson = objectMapper.writeValueAsString(new SignedUp(user.getSubjectId(), user.getNickname(), user.getCategory()));
             Message<String> message = MessageBuilder.withPayload(signedUpEventJson)
                     .setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON_VALUE)
                     .build();
@@ -61,7 +61,7 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("❌ 사용자 없음: " + nickname));
         user.login(rawPassword, passwordEncoder);
 
-        TokenInfo tokenInfo = jwtUtil.generateTokens(user.getNickname(), user.getSubject_id());
+        TokenInfo tokenInfo = jwtUtil.generateTokens(user.getNickname(), user.getSubjectId());
 
         try {
             // RedisTokenInfo 객체 생성
@@ -72,7 +72,7 @@ public class UserService {
 
             // Redis에 JSON 문자열로 저장 (유효기간 7일)
             redisTemplate.opsForValue().set(
-                    user.getSubject_id(),
+                    user.getSubjectId(),
                     objectMapper.writeValueAsString(redisTokenInfo),
                     7,
                     TimeUnit.DAYS
@@ -83,7 +83,7 @@ public class UserService {
         userRepository.save(user);
         // ✅ LoggedIn 이벤트 명시적 발행
         try {
-            String loggedInEventJson = objectMapper.writeValueAsString(new LoggedIn(user.getSubject_id(), user.getNickname()));
+            String loggedInEventJson = objectMapper.writeValueAsString(new LoggedIn(user.getSubjectId(), user.getNickname()));
             Message<String> message = MessageBuilder.withPayload(loggedInEventJson)
                     .setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON_VALUE)
                     .build();
@@ -136,11 +136,11 @@ public class UserService {
             throw new SecurityException("🚨 비정상적인 토큰 재발급 요청입니다. 모든 세션이 종료됩니다.");
         }
 
-        User user = userRepository.findBySubject_id(uuid)
+        User user = userRepository.findBySubjectId(uuid)
                 .orElseThrow(() -> new IllegalArgumentException("❌ 사용자를 찾을 수 없습니다."));
 
         // 5. 새로운 토큰 생성 (회전)
-        TokenInfo newTokenInfo = jwtUtil.generateTokens(user.getNickname(), user.getSubject_id());
+        TokenInfo newTokenInfo = jwtUtil.generateTokens(user.getNickname(), user.getSubjectId());
 
         try {
             // 6. Redis에 새로운 Refresh Token 정보 저장
@@ -165,12 +165,12 @@ public class UserService {
 
     public void logout(String accessToken) {
         String uuid = jwtUtil.getUuidFromToken(accessToken);
-        User user = userRepository.findBySubject_id(uuid)
+        User user = userRepository.findBySubjectId(uuid)
                 .orElseThrow(() -> new IllegalArgumentException("❌ 사용자 없음: " + uuid));
         user.logout();
 
         // ✅ Redis에서 Refresh Token 정보 삭제1
-        redisTemplate.delete(user.getSubject_id());
+        redisTemplate.delete(user.getSubjectId());
 
         // ✅ Access Token의 jti를 블랙리스트에 추가
         String jti = jwtUtil.getJtiFromToken(accessToken);
@@ -192,7 +192,7 @@ public class UserService {
         userRepository.save(user);
         // ✅ LoggedOut 이벤트 명시적 발행
         try {
-            String loggedOutEventJson = objectMapper.writeValueAsString(new LoggedOut(user.getSubject_id(), user.getNickname()));
+            String loggedOutEventJson = objectMapper.writeValueAsString(new LoggedOut(user.getSubjectId(), user.getNickname()));
             Message<String> message = MessageBuilder.withPayload(loggedOutEventJson)
                     .setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON_VALUE)
                     .build();
@@ -204,7 +204,7 @@ public class UserService {
     }
 
     public void changeNickname(String subjectId, String newNickname) {
-        User user = userRepository.findBySubject_id(subjectId)
+        User user = userRepository.findBySubjectId(subjectId)
                 .orElseThrow(() -> new IllegalArgumentException("❌ 사용자 없음: " + subjectId));
 
         if (userRepository.existsByNickname(newNickname)) {
@@ -214,7 +214,7 @@ public class UserService {
         userRepository.save(user);
         // ✅ NicknameChanged 이벤트 명시적 발행
         try {
-            String nicknameChangedEventJson = objectMapper.writeValueAsString(new NicknameChanged(user.getSubject_id(), newNickname));
+            String nicknameChangedEventJson = objectMapper.writeValueAsString(new NicknameChanged(user.getSubjectId(), newNickname));
             Message<String> message = MessageBuilder.withPayload(nicknameChangedEventJson)
                     .setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON_VALUE)
                     .build();
@@ -226,16 +226,16 @@ public class UserService {
     }
 
     public void changePassword(String subjectId, String oldPassword, String newPassword) {
-        User user = userRepository.findBySubject_id(subjectId)
+        User user = userRepository.findBySubjectId(subjectId)
                 .orElseThrow(() -> new IllegalArgumentException("❌ 사용자 없음: " + subjectId));
 
         user.changePassword(oldPassword, newPassword, passwordEncoder);
         userRepository.save(user);
         // ✅ 비밀번호 변경 시 Refresh Token 무효화 (모든 세션 종료)
-        redisTemplate.delete(user.getSubject_id());
+        redisTemplate.delete(user.getSubjectId());
         // ✅ PasswordChanged 이벤트 명시적 발행
         try {
-            String passwordChangedEventJson = objectMapper.writeValueAsString(new PasswordChanged(user.getSubject_id(), user.getNickname()));
+            String passwordChangedEventJson = objectMapper.writeValueAsString(new PasswordChanged(user.getSubjectId(), user.getNickname()));
             Message<String> message = MessageBuilder.withPayload(passwordChangedEventJson)
                     .setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON_VALUE)
                     .build();
@@ -248,7 +248,7 @@ public class UserService {
 
     @Transactional
     public void changeProfileImage(String subjectId, int newProfileImageNumber) {
-        User user = userRepository.findBySubject_id(subjectId)
+        User user = userRepository.findBySubjectId(subjectId)
                 .orElseThrow(() -> new IllegalArgumentException("❌ 사용자 없음: " + subjectId));
 
         if (newProfileImageNumber < 1 || newProfileImageNumber > 8) {
@@ -258,7 +258,7 @@ public class UserService {
         userRepository.save(user);
         // ✅ ProfileImageChanged 이벤트 명시적 발행
         try {
-            String profileImageChangedEventJson = objectMapper.writeValueAsString(new ProfileImageChanged(user.getSubject_id(), newProfileImageNumber));
+            String profileImageChangedEventJson = objectMapper.writeValueAsString(new ProfileImageChanged(user.getSubjectId(), newProfileImageNumber));
             Message<String> message = MessageBuilder.withPayload(profileImageChangedEventJson)
                     .setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON_VALUE)
                     .build();
@@ -276,7 +276,7 @@ public class UserService {
         userRepository.save(user);
         // ✅ AccountDeactivated 이벤트 명시적 발행
         try {
-            String accountDeactivatedEventJson = objectMapper.writeValueAsString(new AccountDeactivated(user.getSubject_id(), user.getNickname()));
+            String accountDeactivatedEventJson = objectMapper.writeValueAsString(new AccountDeactivated(user.getSubjectId(), user.getNickname()));
             Message<String> message = MessageBuilder.withPayload(accountDeactivatedEventJson)
                     .setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON_VALUE)
                     .build();
@@ -288,13 +288,13 @@ public class UserService {
     }
 
     public UserInfoResponse getUserInfo(String subjectId) {
-        User user = userRepository.findBySubject_id(subjectId)
+        User user = userRepository.findBySubjectId(subjectId)
                 .orElseThrow(() -> new IllegalArgumentException("❌ 사용자 없음: " + subjectId));
 
         return UserInfoResponse.builder()
                 .nickname(user.getNickname())
-                .uuid(user.getSubject_id())
-                .profileImageNumber(user.getProfile_image_number())
+                .subjectId(user.getSubjectId())
+                .profileImageNumber(user.getProfileImageNumber())
                 .category(user.getCategory())
                 .build();
     }
