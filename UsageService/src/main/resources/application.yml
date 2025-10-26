@@ -82,6 +82,18 @@ spring:
 
   datasource:
     url: jdbc:postgresql://${POSTGRES_HOST:usageservice-postgres.db.svc.cluster.local}:5432/usageservice
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        show_sql: true
+        format_sql: true
+        implicit_naming_strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyComponentPathImpl
 
   data:
     redis:

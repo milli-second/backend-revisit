@@ -110,6 +110,17 @@ spring:
 
   datasource:
     url: jdbc:postgresql://${POSTGRES_HOST:userservice-postgres.db.svc.cluster.local}:5432/userservice
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        show_sql: true
+        format_sql: true
 
   kafka:
     #bootstrap-servers: kafka-0.kafka.db.svc.cluster.local:9092
