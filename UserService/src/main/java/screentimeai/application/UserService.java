@@ -293,7 +293,7 @@ public class UserService {
 
         return UserInfoResponse.builder()
                 .nickname(user.getNickname())
-                .uuid(user.getSubject_id())
+                .subjectId(user.getSubject_id())
                 .profileImageNumber(user.getProfile_image_number())
                 .category(user.getCategory())
                 .build();
