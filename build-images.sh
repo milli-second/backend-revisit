@@ -33,6 +33,11 @@ echo "📦 Building and pushing UsageService for AMD64..."
 cd "$BACKEND_ROOT/UsageService"
 docker buildx build --platform linux/amd64 --push -t "$DOCKER_USERNAME/usageservice:latest-amd64" .
 
+# InsightService (AMD64용으로 빌드 및 푸시)
+echo "📦 Building and pushing InsightService for AMD64..."
+cd "$BACKEND_ROOT/InsightService"
+docker buildx build --platform linux/amd64 --push -t "$DOCKER_USERNAME/insightservice:latest-amd64" .
+
 # Gateway (AMD64용으로 빌드 및 푸시)
 echo "📦 Building and pushing Gateway for AMD64..."
 cd "$BACKEND_ROOT/gateway"
