@@ -9,14 +9,14 @@ COPY ../settings.gradle ./settings.gradle
 # UserService의 build.gradle만 먼저 복사 (캐시 최적화)
 COPY build.gradle ./UserService/build.gradle
 
-# 종속성 다운로드를 위해 빌드 실행 (캐시 최적화)
-RUN gradle :UserService:build --no-daemon -x test || true
+# 종속성만 다운로드 (캐시 최적화)
+RUN gradle :UserService:dependencies --no-daemon || true
 
 # UserService 모듈 전체를 복사
 COPY . ./UserService/
 
-# 실제 빌드 실행
-RUN gradle :UserService:build -x test --no-daemon
+# clean 후 빌드 실행 (이전 빌드 아티팩트 제거)
+RUN gradle :UserService:clean :UserService:build -x test --no-daemon
 
 # 2. 실행 환경: 빌드된 JAR 파일을 실행합니다.
 FROM --platform=linux/amd64 eclipse-temurin:21-jre-jammy

@@ -9,8 +9,8 @@ COPY ../settings.gradle ./settings.gradle
 # gateway 모듈 전체를 복사
 COPY . ./gateway/
 
-# Gradle 빌드 실행
-RUN gradle :gateway:build -x test --no-daemon
+# clean 후 빌드 실행 (이전 빌드 아티팩트 제거)
+RUN gradle :gateway:clean :gateway:build -x test --no-daemon
 
 # 2. 실행 환경: 빌드된 JAR 파일을 실행합니다.
 FROM --platform=linux/amd64 eclipse-temurin:21-jre-jammy
