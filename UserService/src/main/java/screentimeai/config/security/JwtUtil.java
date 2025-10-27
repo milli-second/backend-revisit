@@ -25,9 +25,9 @@ public class JwtUtil {
     }
 
     // Access Token과 Refresh Token을 모두 생성
-    public TokenInfo generateTokens(String nickname, String uuid) {
-        String accessToken = generateAccessToken(nickname, uuid);
-        String refreshToken = generateRefreshToken(nickname, uuid);
+    public TokenInfo generateTokens(String nickname, String subjectId) {
+        String accessToken = generateAccessToken(nickname, subjectId);
+        String refreshToken = generateRefreshToken(nickname, subjectId);
 
         return TokenInfo.builder()
                 .grantType("Bearer")
@@ -37,19 +37,20 @@ public class JwtUtil {
     }
 
     // Access Token 생성
-    public String generateAccessToken(String nickname, String uuid) {
-        return createToken(nickname, uuid, ACCESS_TOKEN_VALIDITY_MS, true); // Access Token에만 jti 추가
+    public String generateAccessToken(String nickname, String subjectId) {
+        return createToken(nickname, subjectId, ACCESS_TOKEN_VALIDITY_MS, true); // Access Token에만 jti 추가
     }
 
     // Refresh Token 생성
-    public String generateRefreshToken(String nickname, String uuid) {
-        return createToken(nickname, uuid, REFRESH_TOKEN_VALIDITY_MS, false); // Refresh Token에는 jti 추가 안함
+    public String generateRefreshToken(String nickname, String subjectId) {
+        return createToken(nickname, subjectId, REFRESH_TOKEN_VALIDITY_MS, false); // Refresh Token에는 jti 추가 안함
     }
 
-    private String createToken(String nickname, String uuid, long validityMs, boolean includeJti) {
+    private String createToken(String nickname, String subjectId, long validityMs, boolean includeJti) {
         return Jwts.builder()
                 .setSubject(nickname)
-                .claim("uuid", uuid)
+                .claim("subjectId", subjectId)
+                .claim("uuid", subjectId) // 하위 호환성을 위해 uuid도 포함
                 .claim("jti", includeJti ? UUID.randomUUID().toString() : null) // jti 클레임 추가
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + validityMs))
@@ -62,9 +63,13 @@ public class JwtUtil {
         return getClaimFromToken(token, Claims::getSubject);
     }
 
-    // 토큰에서 uuid 추출
+    // 토큰에서 subjectId 추출 (하위 호환성을 위해 uuid도 확인)
     public String getUuidFromToken(String token) {
-        return getClaimFromToken(token, claims -> claims.get("uuid", String.class));
+        String subjectId = getClaimFromToken(token, claims -> claims.get("subjectId", String.class));
+        if (subjectId == null) {
+            subjectId = getClaimFromToken(token, claims -> claims.get("uuid", String.class));
+        }
+        return subjectId;
     }
 
     // 토큰에서 jti 추출

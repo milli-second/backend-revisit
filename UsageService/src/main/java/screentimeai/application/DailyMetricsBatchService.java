@@ -95,8 +95,7 @@ public class DailyMetricsBatchService {
         log.info("Starting daily metrics batch job...");
 
         //TODO: 배포시 어제로 다시 바꿔놓기. 지금은 오늘로 되어 있음
-        LocalDate yesterday = LocalDate.now();
-//                .minusDays(1);
+        LocalDate yesterday = LocalDate.now().minusDays(1);
         String keyPattern = REDIS_KEY_PREFIX + "*:" + yesterday;
 
         // Redis에서 어제 날짜의 모든 키 조회
@@ -141,7 +140,7 @@ public class DailyMetricsBatchService {
 
                 //TODO: 배포시 되돌려 놓기
 //                // Redis 데이터 삭제
-//                redisTemplate.delete(redisKey);
+                redisTemplate.delete(redisKey);
 
                 savedCount++;
                 log.debug("Saved metrics for subject: {}, date: {}", subjectId, yesterday);
@@ -337,13 +336,24 @@ public class DailyMetricsBatchService {
             String dailyKey = REDIS_KEY_PREFIX + subjectId + ":" + date;
             Map<Object, Object> redisData = redisTemplate.opsForHash().entries(dailyKey);
 
-            if (redisData.isEmpty()) {
-                log.warn("No aggregated data found for subjectId={}, date={}", subjectId, date);
-                return;
+            // 3. DB에 저장 (기존 데이터가 있으면 업데이트)
+            DailyUserMetrics metrics = saveDailyMetricsToDb(subjectId, date, redisData);
+
+            // --- [ ✨ 3. SNS 인사이트 계산 로직 추가 ] ---
+            // saveDailyMetricsToDB와 동일한 로직
+            try {
+                // 'yesterday' 대신 'date' 변수 사용
+                snsInsightService.calculateAndSave(subjectId, date);
+                log.debug("SNS insight calculated for subject: {}, date: {}", subjectId, date);
+            } catch (Exception e) {
+                log.error("Failed to calculate SNS insight for subject: {}, date: {}", subjectId, date, e);
             }
 
-            // 3. DB에 저장 (기존 데이터가 있으면 업데이트)
-            saveDailyMetricsToDb(subjectId, date, redisData);
+            // --- [ ✨ 4. 이벤트 발행 로직 추가 ] ---
+            // saveDailyMetricsToDB와 동일한 로직
+            DailyMetricsSaved event = new DailyMetricsSaved(metrics); // 반환받은 metrics 객체 사용
+            eventPublisher.publish("produceDailyMetricsSaved", event, "DailyMetricsSaved");
+            log.info("Published DailyMetricsSaved event for subject: {}, date: {}", subjectId, date);
 
             // 4. Redis 데이터 삭제 (과거 데이터는 즉시 DB로 이동)
             redisTemplate.delete(dailyKey);
@@ -361,7 +371,7 @@ public class DailyMetricsBatchService {
     /**
      * Redis 집계 데이터를 DB에 저장 (기존 데이터와 병합)
      */
-    private void saveDailyMetricsToDb(UUID subjectId, LocalDate date, Map<Object, Object> redisData) {
+    private DailyUserMetrics saveDailyMetricsToDb(UUID subjectId, LocalDate date, Map<Object, Object> redisData) {
         // 1. 기존 DailyUserMetrics 조회 및 병합
         Optional<DailyUserMetrics> existingMetrics = metricsRepository
                 .findBySubjectIdAndSummaryDate(subjectId, date);
@@ -383,7 +393,7 @@ public class DailyMetricsBatchService {
             mergeCategoryUsages(subjectId, date, categoryUsages);
         }
 
-
+        return metrics;
     }
 
     /**

@@ -65,12 +65,15 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
                         .parseSignedClaims(token)
                         .getPayload();
 
-                // 4. UUID 추출 (JWT의 "uuid" claim)
-                String subjectId = claims.get("uuid", String.class);
+                // 4. subjectId 추출 (JWT의 "subjectId" claim, 하위 호환성을 위해 "uuid"도 확인)
+                String subjectId = claims.get("subjectId", String.class);
+                if (subjectId == null || subjectId.isEmpty()) {
+                    subjectId = claims.get("uuid", String.class); // 하위 호환성
+                }
 
                 if (subjectId == null || subjectId.isEmpty()) {
-                    log.warn("Missing uuid in JWT");
-                    return onError(exchange, "Invalid token: missing uuid", HttpStatus.UNAUTHORIZED);
+                    log.warn("Missing subjectId/uuid in JWT");
+                    return onError(exchange, "Invalid token: missing subjectId", HttpStatus.UNAUTHORIZED);
                 }
 
                 log.debug("JWT validated successfully. UUID: {}", subjectId);

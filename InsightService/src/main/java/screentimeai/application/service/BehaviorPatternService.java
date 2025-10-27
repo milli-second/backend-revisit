@@ -39,7 +39,7 @@ public class BehaviorPatternService {
                 subjectId, startDate, yesterday);
 
         List<UserClassificationEntity> classifications = classificationRepository
-                .findRecentBySubjectId(subjectId, startDate);
+                .findRecentBySubjectId(subjectId, startDate, yesterday);
 
         List<BehaviorPatternResponse> responses = classifications.stream()
                 .map(this::buildBehaviorPatternResponse)

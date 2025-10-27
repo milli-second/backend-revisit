@@ -63,9 +63,20 @@ public class AiInsightService {
         LocalDate startDate = yesterday.minusDays(6);
         List<InsightDailySummaryEntity> dailySummaries = dailySummaryRepository.findRecentBySubjectId(userId, startDate);
 
+        // 데이터 충분성 검증
         if (patterns.isEmpty() && preferences.isEmpty() && dailySummaries.isEmpty()) {
             log.warn("No data available for user: {}", userId);
-            return "분석할 데이터가 충분하지 않습니다.";
+            return "아직 분석할 데이터가 충분하지 않습니다. 며칠 더 사용 후 다시 확인해주세요.";
+        }
+
+        // dailySummaries에 유효한 데이터가 있는지 확인
+        long validDailySummaries = dailySummaries.stream()
+                .filter(s -> s.getTotalUsageMinutes() != null && s.getTotalUsageMinutes() > 0)
+                .count();
+
+        if (validDailySummaries < 3 && patterns.isEmpty() && preferences.isEmpty()) {
+            log.warn("Insufficient valid data for user: {}. Valid summaries: {}", userId, validDailySummaries);
+            return "아직 분석할 데이터가 충분하지 않습니다. 며칠 더 사용 후 다시 확인해주세요.";
         }
 
         // 2. 프롬프트 생성
@@ -112,10 +123,10 @@ public class AiInsightService {
 
             // 최대/최소 사용일 찾기
             InsightDailySummaryEntity maxUsage = dailySummaries.stream()
-                    .max(Comparator.comparing(InsightDailySummaryEntity::getTotalUsageMinutes))
+                    .max(Comparator.comparing(InsightDailySummaryEntity::getTotalUsageMinutes, Comparator.nullsLast(Comparator.naturalOrder())))
                     .orElse(null);
             InsightDailySummaryEntity minUsage = dailySummaries.stream()
-                    .min(Comparator.comparing(InsightDailySummaryEntity::getTotalUsageMinutes))
+                    .min(Comparator.comparing(InsightDailySummaryEntity::getTotalUsageMinutes, Comparator.nullsLast(Comparator.naturalOrder())))
                     .orElse(null);
 
             if (maxUsage != null && minUsage != null) {

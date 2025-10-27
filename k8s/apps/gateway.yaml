@@ -61,6 +61,8 @@ spec:
             configMapKeyRef:
               name: gateway-config
               key: INSIGHTSERVICE_URI
+        - name: JWT_SECRET_KEY
+          value: "my-jwt-secret-key-change-in-production-7e9f3b4c5d7c5d8e4f12a9ec17f1f4d29c6b1f8a2"
         resources:
           requests:
             memory: "128Mi"
@@ -72,15 +74,15 @@ spec:
           httpGet:
             path: /actuator/health
             port: 8088
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 3
+          initialDelaySeconds: 120
+          periodSeconds: 15
+          timeoutSeconds: 10
+          failureThreshold: 6
         readinessProbe:
           httpGet:
             path: /actuator/health
             port: 8088
-          initialDelaySeconds: 15
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 3
+          initialDelaySeconds: 90
+          periodSeconds: 10
+          timeoutSeconds: 10
+          failureThreshold: 10

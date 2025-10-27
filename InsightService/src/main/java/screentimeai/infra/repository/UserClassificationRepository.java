@@ -17,9 +17,10 @@ public interface UserClassificationRepository extends JpaRepository<UserClassifi
     /**
      * 특정 사용자의 최근 N일 분류 결과 조회
      */
-    @Query("SELECT u FROM UserClassificationEntity u WHERE u.subjectId = :subjectId AND u.classifiedDate > :startDate ORDER BY u.classifiedDate DESC")
+    @Query("SELECT u FROM UserClassificationEntity u WHERE u.subjectId = :subjectId AND u.classifiedDate > :startDate AND u.classifiedDate <= :endDate ORDER BY u.classifiedDate DESC")
     List<UserClassificationEntity> findRecentBySubjectId(
             @Param("subjectId") UUID subjectId,
-            @Param("startDate") LocalDate startDate
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
     );
 }

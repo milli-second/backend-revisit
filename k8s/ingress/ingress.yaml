@@ -6,6 +6,7 @@ metadata:
   annotations:
     # F5 Nginx Ingress Controller annotations
     nginx.org/redirect-to-https: "true"
+    nginx.org/client-max-body-size: "50m"  # 요청 본문 최대 크기 50MB
     # Let's Encrypt 자동 인증서 발급 (cert-manager 사용 시)
     cert-manager.io/cluster-issuer: letsencrypt-prod
     # .git 디렉토리 접근 차단

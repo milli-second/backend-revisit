@@ -73,5 +73,5 @@ def split_by_day(user_id, input_dir="users", output_dir=None):
 
 if __name__ == '__main__':
     # 가장 데이터가 많은 사용자
-    user_id = "07a76922a3af962fd790fda624b7c9f1"
+    user_id = "214274a5fcf0a101e0e6010c9b8db388"
     split_by_day(user_id)

@@ -39,7 +39,7 @@ public class ContentPreferenceService {
                 subjectId, startDate, yesterday);
 
         List<UserClassificationEntity> classifications = classificationRepository
-                .findRecentBySubjectId(subjectId, startDate);
+                .findRecentBySubjectId(subjectId, startDate, yesterday);
 
         List<ContentPreferenceResponse> responses = classifications.stream()
                 .map(this::buildContentPreferenceResponse)
