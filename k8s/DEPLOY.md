@@ -32,10 +32,7 @@ kubectl get namespace
 
 ```bash
 # DB namespace용 Secret
-kubectl apply -f secrets/db-secrets.yaml
-
-# 애플리케이션 namespace용 Secret
-kubectl apply -f secrets/app-secrets.yaml
+kubectl apply -f secrets
 
 # 확인
 kubectl get secrets -n db

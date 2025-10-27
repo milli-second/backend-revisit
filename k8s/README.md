@@ -53,8 +53,7 @@ kubectl apply -f namespace.yaml
 ### 2. Secret 생성
 ```bash
 # ⚠️ 프로덕션에서는 비밀번호를 반드시 변경하세요!
-kubectl apply -f secrets/db-secrets.yaml
-kubectl apply -f ./secrets/app-secrets.yaml
+kubectl apply -f secrets
 ```
 
 ### 3. 데이터베이스 배포
