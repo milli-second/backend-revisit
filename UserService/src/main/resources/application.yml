@@ -123,8 +123,8 @@ spring:
         format_sql: true
 
   kafka:
-    #bootstrap-servers: kafka-0.kafka.db.svc.cluster.local:9092
-    bootstrap-servers: my-kafka:9092
+    bootstrap-servers: kafka-0.kafka.db.svc.cluster.local:9092
+    #bootstrap-servers: my-kafka:9092
     properties:
       security.protocol: PLAINTEXT
 
