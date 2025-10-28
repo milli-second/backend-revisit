@@ -7,20 +7,25 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import screentimeai.domain.entity.InsightDailySummaryEntity;
+import screentimeai.domain.entity.InsightSummaryEntity;
 import screentimeai.domain.model.OpenAiRequest;
 import screentimeai.domain.model.OpenAiResponse;
 import screentimeai.infra.repository.InsightDailySummaryRepository;
+import screentimeai.infra.repository.InsightSummaryRepository;
 import screentimeai.presentation.dto.BehaviorPatternResponse;
 import screentimeai.presentation.dto.ContentPreferenceResponse;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.TextStyle;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -32,6 +37,7 @@ public class AiInsightService {
     private final BehaviorPatternService behaviorPatternService;
     private final ContentPreferenceService contentPreferenceService;
     private final InsightDailySummaryRepository dailySummaryRepository;
+    private final InsightSummaryRepository insightSummaryRepository;
 
     @Value("${openai.api-key}")
     private String apiKey;
@@ -51,10 +57,22 @@ public class AiInsightService {
     /**
      * AI 기반 인사이트 요약 생성
      */
+    @Transactional
     public String generateInsightSummary(UUID userId) {
         log.info("Generating AI insight summary for user: {}", userId);
 
-        // 1. 데이터 수집
+        // 1. 캐시 확인 (24시간 이내)
+        Optional<InsightSummaryEntity> cachedSummary = insightSummaryRepository.findByUserIdAndUpdatedAtAfter(
+                userId,
+                LocalDateTime.now().minusHours(24)
+        );
+
+        if (cachedSummary.isPresent()) {
+            log.info("Returning cached insight summary for user: {}", userId);
+            return cachedSummary.get().getSummary();
+        }
+
+        // 2. 데이터 수집
         List<BehaviorPatternResponse> patterns = behaviorPatternService.getWeeklyBehaviorPatterns(userId);
         List<ContentPreferenceResponse> preferences = contentPreferenceService.getWeeklyContentPreferences(userId);
 
@@ -79,13 +97,21 @@ public class AiInsightService {
             return "아직 분석할 데이터가 충분하지 않습니다. 며칠 더 사용 후 다시 확인해주세요.";
         }
 
-        // 2. 프롬프트 생성
+        // 3. 프롬프트 생성
         String prompt = buildPrompt(patterns, preferences, dailySummaries);
 
-        // 3. OpenAI API 호출
+        // 4. OpenAI API 호출
         String summary = callOpenAi(prompt);
 
-        log.info("AI insight generated successfully for user: {}", userId);
+        // 5. 결과 저장
+        InsightSummaryEntity summaryEntity = InsightSummaryEntity.builder()
+                .userId(userId)
+                .summary(summary)
+                .build();
+        insightSummaryRepository.save(summaryEntity);
+
+
+        log.info("AI insight generated and saved successfully for user: {}", userId);
         return summary;
     }
 
