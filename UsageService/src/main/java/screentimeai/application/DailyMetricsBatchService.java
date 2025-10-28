@@ -94,7 +94,6 @@ public class DailyMetricsBatchService {
     public void saveDailyMetricsToDB() {
         log.info("Starting daily metrics batch job...");
 
-        //TODO: 배포시 어제로 다시 바꿔놓기. 지금은 오늘로 되어 있음
         LocalDate yesterday = LocalDate.now().minusDays(1);
         String keyPattern = REDIS_KEY_PREFIX + "*:" + yesterday;
 
@@ -138,8 +137,7 @@ public class DailyMetricsBatchService {
                 eventPublisher.publish("produceDailyMetricsSaved", event, "DailyMetricsSaved");
                 log.info("Published DailyMetricsSaved event for subject: {}, date: {}", subjectId, yesterday);
 
-                //TODO: 배포시 되돌려 놓기
-//                // Redis 데이터 삭제
+
                 redisTemplate.delete(redisKey);
 
                 savedCount++;
