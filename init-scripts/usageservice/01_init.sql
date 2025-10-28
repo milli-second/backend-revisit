@@ -114,5 +114,3 @@ CREATE TABLE IF NOT EXISTS user_sns_insight (
 
 CREATE INDEX IF NOT EXISTS idx_sns_insight_date ON user_sns_insight(calculated_date);
 CREATE INDEX IF NOT EXISTS idx_sns_insight_subject ON user_sns_insight(subject_id);
-
-TRUNCATE TABLE user_sns_insight;
