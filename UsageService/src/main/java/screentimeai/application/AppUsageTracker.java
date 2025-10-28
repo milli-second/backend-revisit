@@ -130,9 +130,7 @@ public class AppUsageTracker {
             return;
         }
 
-        int usageMinutes = (int) (usageMillis / 60000);
-
-        // 사용시간 집계 (자정 넘김 고려)
+        // 사용시간 집계 (자정 넘김 고려) - 밀리초 단위로 전달
         aggregateUsageTimeWithDateBoundary(rawData, Instant.ofEpochMilli(startTimestamp),
                 rawData.getTimestamp(), usageMillis, utcOffset);
 
@@ -142,8 +140,8 @@ public class AppUsageTracker {
         // Foreground 세션 삭제
         redisTemplate.delete(key);
 
-        log.debug("Usage recorded: subjectId={}, package={}, minutes={}",
-                rawData.getSubjectId(), rawData.getPackageName(), usageMinutes);
+        log.debug("Usage recorded: subjectId={}, package={}, millis={}",
+                rawData.getSubjectId(), rawData.getPackageName(), usageMillis);
     }
 
     /**
@@ -174,10 +172,10 @@ public class AppUsageTracker {
     }
 
     /**
-     * 사용시간을 Redis에 집계
+     * 사용시간을 Redis에 집계 (밀리초 단위로 누적)
      */
     private void aggregateUsageTime(RawData rawData, Instant startTime,
-                                     int usageMinutes, int utcOffset) {
+                                     long usageMillis, int utcOffset) {
         UUID subjectId = rawData.getSubjectId();
         String packageName = rawData.getPackageName();
         LocalDate date = getLocalDate(startTime, utcOffset);
@@ -189,21 +187,24 @@ public class AppUsageTracker {
         int categoryId = categoryMappingService.getCategoryId(packageName);
         boolean isSocial = categoryMappingService.isSocialCategory(categoryId);
 
-        // 1. 총 사용시간
-        redisTemplate.opsForHash().increment(dailyKey, "total_usage_minutes", usageMinutes);
+        // usageMinutes는 호환성/로깅용 (반올림)
+        int usageMinutes = (int) Math.round(usageMillis / 60000.0);
 
-        // 2. 시간대별 사용시간 (시작 시간 기준)
-        aggregateByTimeOfDay(dailyKey, startTime, usageMinutes, utcOffset, isSocial);
+        // 1. 총 사용시간 - 밀리초로 누적 (정확한 계산)
+        redisTemplate.opsForHash().increment(dailyKey, "total_usage_millis", usageMillis);
 
-        // 3. 시간별 사용량 (most_active_hour 계산용)
+        // 2. 시간대별 사용시간 (시작 시간 기준) - 밀리초로 저장
+        aggregateByTimeOfDay(dailyKey, startTime, usageMillis, utcOffset, isSocial);
+
+        // 3. 시간별 사용량 (most_active_hour 계산용) - 밀리초로 저장
         int hour = getHour(startTime, utcOffset);
-        redisTemplate.opsForHash().increment(dailyKey, "hour_" + hour, usageMinutes);
+        redisTemplate.opsForHash().increment(dailyKey, "hour_millis_" + hour, usageMillis);
 
-        // 4. 카테고리별 사용시간
-        redisTemplate.opsForHash().increment(dailyKey, "category_" + categoryId, usageMinutes);
+        // 4. 카테고리별 사용시간 - 밀리초로 저장
+        redisTemplate.opsForHash().increment(dailyKey, "category_millis_" + categoryId, usageMillis);
 
-        // 5. 앱별 사용시간 (Top 3 계산용)
-        redisTemplate.opsForHash().increment(dailyKey, "app:" + packageName + ":" + rawData.getName(), usageMinutes);
+        // 5. 앱별 사용시간 (Top 3 계산용) - 밀리초로 저장
+        redisTemplate.opsForHash().increment(dailyKey, "app_millis:" + packageName + ":" + rawData.getName(), usageMillis);
 
         // 6. 실시간 메트릭 (24시간 슬라이딩 윈도우)
         aggregateRealtimeMetrics(realtimeKey, packageName, rawData.getName(), startTime, usageMinutes, categoryId);
@@ -213,24 +214,24 @@ public class AppUsageTracker {
     }
 
     /**
-     * 시간대별 사용시간 집계
+     * 시간대별 사용시간 집계 (밀리초 단위)
      * Dawn: 0-6시, Morning: 6-12시, Afternoon: 12-18시, Evening: 18-24시
      */
     private void aggregateByTimeOfDay(String redisKey, Instant timestamp,
-                                       int usageMinutes, int utcOffset, boolean isSocial) {
+                                       long usageMillis, int utcOffset, boolean isSocial) {
         int hour = getHour(timestamp, utcOffset);
 
         if (hour >= 0 && hour < 6) {
-            redisTemplate.opsForHash().increment(redisKey, "dawn_minutes", usageMinutes);
+            redisTemplate.opsForHash().increment(redisKey, "dawn_millis", usageMillis);
             if (isSocial) {
-                redisTemplate.opsForHash().increment(redisKey, "dawn_sns_minutes", usageMinutes);
+                redisTemplate.opsForHash().increment(redisKey, "dawn_sns_millis", usageMillis);
             }
         } else if (hour >= 6 && hour < 12) {
-            redisTemplate.opsForHash().increment(redisKey, "morning_minutes", usageMinutes);
+            redisTemplate.opsForHash().increment(redisKey, "morning_millis", usageMillis);
         } else if (hour >= 12 && hour < 18) {
-            redisTemplate.opsForHash().increment(redisKey, "afternoon_minutes", usageMinutes);
+            redisTemplate.opsForHash().increment(redisKey, "afternoon_millis", usageMillis);
         } else {
-            redisTemplate.opsForHash().increment(redisKey, "evening_minutes", usageMinutes);
+            redisTemplate.opsForHash().increment(redisKey, "evening_millis", usageMillis);
         }
     }
 
@@ -513,8 +514,7 @@ public class AppUsageTracker {
 
         // 같은 날이면 기존 로직 사용
         if (startDate.equals(endDate)) {
-            int usageMinutes = (int) (usageMillis / 60000);
-            aggregateUsageTime(rawData, startTime, usageMinutes, utcOffset);
+            aggregateUsageTime(rawData, startTime, usageMillis, utcOffset);
             return;
         }
 
@@ -532,20 +532,19 @@ public class AppUsageTracker {
                     currentDate.plusDays(1).atStartOfDay(zoneId).toInstant();
 
             long dayUsageMillis = dayEnd.toEpochMilli() - dayStart.toEpochMilli();
-            int dayUsageMinutes = (int) (dayUsageMillis / 60000);
 
-            // 각 날짜별로 집계
-            aggregateUsageTimeForDate(rawData, dayStart, dayUsageMinutes, utcOffset, currentDate);
+            // 각 날짜별로 집계 (밀리초 단위)
+            aggregateUsageTimeForDate(rawData, dayStart, dayUsageMillis, utcOffset, currentDate);
 
             currentDate = currentDate.plusDays(1);
         }
     }
 
     /**
-     * 특정 날짜에 대한 사용시간 집계
+     * 특정 날짜에 대한 사용시간 집계 (밀리초 단위)
      */
     private void aggregateUsageTimeForDate(RawData rawData, Instant startTime,
-                                            int usageMinutes, int utcOffset, LocalDate targetDate) {
+                                            long usageMillis, int utcOffset, LocalDate targetDate) {
         UUID subjectId = rawData.getSubjectId();
         String packageName = rawData.getPackageName();
 
@@ -556,21 +555,23 @@ public class AppUsageTracker {
         int categoryId = categoryMappingService.getCategoryId(packageName);
         boolean isSocial = categoryMappingService.isSocialCategory(categoryId);
 
-        // 1. 총 사용시간
-        redisTemplate.opsForHash().increment(dailyKey, "total_usage_minutes", usageMinutes);
+        int usageMinutes = (int) Math.round(usageMillis / 60000.0);
 
-        // 2. 시간대별 사용시간 (시작 시간 기준)
-        aggregateByTimeOfDay(dailyKey, startTime, usageMinutes, utcOffset, isSocial);
+        // 1. 총 사용시간 - 밀리초로 누적
+        redisTemplate.opsForHash().increment(dailyKey, "total_usage_millis", usageMillis);
 
-        // 3. 시간별 사용량 (most_active_hour 계산용)
+        // 2. 시간대별 사용시간 (시작 시간 기준) - 밀리초로 저장
+        aggregateByTimeOfDay(dailyKey, startTime, usageMillis, utcOffset, isSocial);
+
+        // 3. 시간별 사용량 (most_active_hour 계산용) - 밀리초로 저장
         int hour = getHour(startTime, utcOffset);
-        redisTemplate.opsForHash().increment(dailyKey, "hour_" + hour, usageMinutes);
+        redisTemplate.opsForHash().increment(dailyKey, "hour_millis_" + hour, usageMillis);
 
-        // 4. 카테고리별 사용시간
-        redisTemplate.opsForHash().increment(dailyKey, "category_" + categoryId, usageMinutes);
+        // 4. 카테고리별 사용시간 - 밀리초로 저장
+        redisTemplate.opsForHash().increment(dailyKey, "category_millis_" + categoryId, usageMillis);
 
-        // 5. 앱별 사용시간 (Top 3 계산용)
-        redisTemplate.opsForHash().increment(dailyKey, "app:" + packageName + ":" + rawData.getName(), usageMinutes);
+        // 5. 앱별 사용시간 (Top 3 계산용) - 밀리초로 저장
+        redisTemplate.opsForHash().increment(dailyKey, "app_millis:" + packageName + ":" + rawData.getName(), usageMillis);
 
         // 6. 실시간 메트릭 (24시간 슬라이딩 윈도우)
         aggregateRealtimeMetrics(realtimeKey, packageName, rawData.getName(), startTime, usageMinutes, categoryId);
@@ -578,8 +579,8 @@ public class AppUsageTracker {
         // TTL 설정 (48시간 후 자동 삭제)
         redisTemplate.expire(dailyKey, 48, TimeUnit.HOURS);
 
-        log.debug("Usage aggregated for date {}: subjectId={}, package={}, minutes={}",
-                targetDate, subjectId, packageName, usageMinutes);
+        log.debug("Usage aggregated for date {}: subjectId={}, package={}, millis={}",
+                targetDate, subjectId, packageName, usageMillis);
     }
 
     private String buildLastSessionKey(UUID subjectId, String packageName) {

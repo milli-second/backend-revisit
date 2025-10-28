@@ -160,17 +160,21 @@ public class DailyMetricsBatchService {
     }
 
     private DailyUserMetrics convertToMetrics(UUID subjectId, LocalDate date, Map<Object, Object> redisData) {
-        int totalMinutes = getIntValue(redisData, "total_usage_minutes");
+        // 밀리초 값을 우선 사용, 없으면 기존 분 값 사용 (호환성)
+        long totalMillis = getLongValue(redisData, "total_usage_millis");
+        int totalMinutes = totalMillis > 0
+                ? (int) Math.round(totalMillis / 60000.0)
+                : getIntValue(redisData, "total_usage_minutes");
 
         return DailyUserMetrics.builder()
                 .subjectId(subjectId)
                 .summaryDate(date)
                 .totalUsageMinutes(totalMinutes)
-                .dawnMinutes(getIntValue(redisData, "dawn_minutes"))
-                .morningMinutes(getIntValue(redisData, "morning_minutes"))
-                .afternoonMinutes(getIntValue(redisData, "afternoon_minutes"))
-                .eveningMinutes(getIntValue(redisData, "evening_minutes"))
-                .dawnSnsMinutes(getIntValue(redisData, "dawn_sns_minutes"))
+                .dawnMinutes(convertMillisToMinutes(redisData, "dawn_millis", "dawn_minutes"))
+                .morningMinutes(convertMillisToMinutes(redisData, "morning_millis", "morning_minutes"))
+                .afternoonMinutes(convertMillisToMinutes(redisData, "afternoon_millis", "afternoon_minutes"))
+                .eveningMinutes(convertMillisToMinutes(redisData, "evening_millis", "evening_minutes"))
+                .dawnSnsMinutes(convertMillisToMinutes(redisData, "dawn_sns_millis", "dawn_sns_minutes"))
                 .mostActiveHourStart(calculateMostActiveHour(redisData))
                 .dailyPickupCount(getIntValue(redisData, "daily_pickup_count"))
                 .gameRatio(calculateCategoryRatio(redisData, CategoryMappingService.CATEGORY_GAME, totalMinutes))
@@ -178,6 +182,23 @@ public class DailyMetricsBatchService {
                 .learningRatio(calculateCategoryRatio(redisData, CategoryMappingService.CATEGORY_LEARNING, totalMinutes))
                 .entertainmentRatio(calculateCategoryRatio(redisData, CategoryMappingService.CATEGORY_ENTERTAINMENT, totalMinutes))
                 .build();
+    }
+
+    /**
+     * 밀리초 값을 분으로 변환 (밀리초 값 우선, 없으면 기존 분 값 사용)
+     */
+    private int convertMillisToMinutes(Map<Object, Object> data, String millisKey, String minutesKey) {
+        long millis = getLongValue(data, millisKey);
+        if (millis > 0) {
+            return (int) Math.round(millis / 60000.0);
+        }
+        return getIntValue(data, minutesKey);
+    }
+
+    private long getLongValue(Map<Object, Object> data, String key) {
+        Object value = data.get(key);
+        if (value == null) return 0L;
+        return Long.parseLong(value.toString());
     }
 
     /**
@@ -192,12 +213,13 @@ public class DailyMetricsBatchService {
         for (Map.Entry<Object, Object> entry : redisData.entrySet()) {
             String key = entry.getKey().toString();
 
-            // "app:{packageName}:{appName}" 형식의 키 찾기
-            if (key.startsWith("app:")) {
+            // "app_millis:{packageName}:{appName}" 형식의 키 우선 찾기
+            if (key.startsWith("app_millis:")) {
                 String[] parts = key.split(":", 3);
                 if (parts.length >= 2) {
                     String packageName = parts[1];
-                    int usageMinutes = getIntValue(redisData, key);
+                    long usageMillis = getLongValue(redisData, key);
+                    int usageMinutes = (int) Math.round(usageMillis / 60000.0);
 
                     if (usageMinutes > 0) {
                         // 원본 카테고리 코드 조회
@@ -207,6 +229,25 @@ public class DailyMetricsBatchService {
                         // 카테고리별로 합산
                         categoryCodeUsage.merge(categoryCode, usageMinutes, Integer::sum);
                         categoryIdMap.put(categoryCode, categoryId);
+                    }
+                }
+            } else if (key.startsWith("app:")) {
+                // 기존 분 단위 데이터 호환성
+                String[] parts = key.split(":", 3);
+                if (parts.length >= 2) {
+                    String packageName = parts[1];
+                    // 밀리초 키가 없는 경우에만 처리
+                    String millisKey = "app_millis:" + parts[1] + ":" + (parts.length > 2 ? parts[2] : "");
+                    if (!redisData.containsKey(millisKey)) {
+                        int usageMinutes = getIntValue(redisData, key);
+
+                        if (usageMinutes > 0) {
+                            String categoryCode = categoryMappingService.getCategoryCode(packageName);
+                            int categoryId = categoryMappingService.getCategoryId(packageName);
+
+                            categoryCodeUsage.merge(categoryCode, usageMinutes, Integer::sum);
+                            categoryIdMap.put(categoryCode, categoryId);
+                        }
                     }
                 }
             }
@@ -248,18 +289,24 @@ public class DailyMetricsBatchService {
      * @return 2시간 윈도우 시작 시간 (0-22), 사용량이 없으면 null
      */
     private Integer calculateMostActiveHour(Map<Object, Object> data) {
-        // Extract hourly usage data (0-23)
-        int[] hourlyMinutes = new int[24];
+        // Extract hourly usage data (0-23) - 밀리초 값 우선 사용
+        long[] hourlyMillis = new long[24];
         for (int hour = 0; hour < 24; hour++) {
-            hourlyMinutes[hour] = getIntValue(data, "hour_" + hour);
+            long millis = getLongValue(data, "hour_millis_" + hour);
+            if (millis > 0) {
+                hourlyMillis[hour] = millis;
+            } else {
+                // 기존 분 값을 밀리초로 변환 (호환성)
+                hourlyMillis[hour] = getIntValue(data, "hour_" + hour) * 60000L;
+            }
         }
 
         // Find max 2-hour window
-        int maxTwoHourUsage = 0;  // Changed from -1: only update when there's actual usage
+        long maxTwoHourUsage = 0;
         int mostActiveHourStart = -1;
 
         for (int i = 0; i < 23; i++) {
-            int twoHourUsage = hourlyMinutes[i] + hourlyMinutes[i+1];
+            long twoHourUsage = hourlyMillis[i] + hourlyMillis[i+1];
             if (twoHourUsage > maxTwoHourUsage) {
                 maxTwoHourUsage = twoHourUsage;
                 mostActiveHourStart = i;
@@ -271,7 +318,13 @@ public class DailyMetricsBatchService {
 
     private Float calculateCategoryRatio(Map<Object, Object> data, int categoryId, int totalMinutes) {
         if (totalMinutes == 0) return 0f;
-        int categoryMinutes = getIntValue(data, "category_" + categoryId);
+
+        // 밀리초 값 우선 사용
+        long categoryMillis = getLongValue(data, "category_millis_" + categoryId);
+        int categoryMinutes = categoryMillis > 0
+                ? (int) Math.round(categoryMillis / 60000.0)
+                : getIntValue(data, "category_" + categoryId);
+
         return (float) categoryMinutes / totalMinutes;
     }
 
@@ -400,16 +453,20 @@ public class DailyMetricsBatchService {
      * 기존 메트릭과 새로운 Redis 데이터를 병합
      */
     private DailyUserMetrics mergeMetrics(DailyUserMetrics existing, Map<Object, Object> redisData) {
-        int newTotalMinutes = getIntValue(redisData, "total_usage_minutes");
+        // 밀리초 값 우선 사용
+        long newTotalMillis = getLongValue(redisData, "total_usage_millis");
+        int newTotalMinutes = newTotalMillis > 0
+                ? (int) Math.round(newTotalMillis / 60000.0)
+                : getIntValue(redisData, "total_usage_minutes");
         int mergedTotal = existing.getTotalUsageMinutes() + newTotalMinutes;
 
-        // 각 필드 합산
+        // 각 필드 합산 (밀리초 값 우선 사용)
         existing.setTotalUsageMinutes(mergedTotal);
-        existing.setDawnMinutes(existing.getDawnMinutes() + getIntValue(redisData, "dawn_minutes"));
-        existing.setMorningMinutes(existing.getMorningMinutes() + getIntValue(redisData, "morning_minutes"));
-        existing.setAfternoonMinutes(existing.getAfternoonMinutes() + getIntValue(redisData, "afternoon_minutes"));
-        existing.setEveningMinutes(existing.getEveningMinutes() + getIntValue(redisData, "evening_minutes"));
-        existing.setDawnSnsMinutes(existing.getDawnSnsMinutes() + getIntValue(redisData, "dawn_sns_minutes"));
+        existing.setDawnMinutes(existing.getDawnMinutes() + convertMillisToMinutes(redisData, "dawn_millis", "dawn_minutes"));
+        existing.setMorningMinutes(existing.getMorningMinutes() + convertMillisToMinutes(redisData, "morning_millis", "morning_minutes"));
+        existing.setAfternoonMinutes(existing.getAfternoonMinutes() + convertMillisToMinutes(redisData, "afternoon_millis", "afternoon_minutes"));
+        existing.setEveningMinutes(existing.getEveningMinutes() + convertMillisToMinutes(redisData, "evening_millis", "evening_minutes"));
+        existing.setDawnSnsMinutes(existing.getDawnSnsMinutes() + convertMillisToMinutes(redisData, "dawn_sns_millis", "dawn_sns_minutes"));
         existing.setDailyPickupCount(existing.getDailyPickupCount() + getIntValue(redisData, "daily_pickup_count"));
 
         // most_active_hour는 기존 데이터와 비교하여 재계산
@@ -427,9 +484,12 @@ public class DailyMetricsBatchService {
             categoryMinutes.put(cat.getCategoryId(), cat.getUsageMinutes());
         }
 
-        // Redis에서 새로 들어온 카테고리 사용량 추가
+        // Redis에서 새로 들어온 카테고리 사용량 추가 (밀리초 우선)
         for (int categoryId = 1; categoryId <= 5; categoryId++) {
-            int redisMinutes = getIntValue(redisData, "category_" + categoryId);
+            long redisMillis = getLongValue(redisData, "category_millis_" + categoryId);
+            int redisMinutes = redisMillis > 0
+                    ? (int) Math.round(redisMillis / 60000.0)
+                    : getIntValue(redisData, "category_" + categoryId);
             categoryMinutes.merge(categoryId, redisMinutes, Integer::sum);
         }
 
