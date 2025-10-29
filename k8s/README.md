@@ -1,4 +1,6 @@
-# Screen Time AI - Kubernetes Deployment
+# K8s Deployment
+
+이 디렉토리에는 백엔드 서비스의 Kubernetes 배포를 위한 설정 파일이 포함되어 있습니다. 여기에는 서비스, 디플로이먼트, 인그레스 및 데이터베이스 구성을 위한 YAML 파일이 포함됩니다.
 
 ## 📁 디렉토리 구조
 

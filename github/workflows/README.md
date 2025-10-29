@@ -1,4 +1,6 @@
-# Please check before using Github action.
+# Github Actions Workflows
+
+이 디렉토리에는 프로젝트의 지속적인 통합 및 배포(CI/CD)를 위한 GitHub Actions 워크플로우 정의가 포함되어 있습니다. 여기에는 코드 빌드, 테스트, 정적 분석 및 배포 프로세스가 포함될 수 있습니다.
 
 ## First, change the folder name 
 ```
