@@ -42,12 +42,12 @@ WORKDIR /home/gradle/project
 COPY build.gradle settings.gradle ./
 COPY UsageService ./UsageService/
 
-RUN gradle :UsageService:build -x test --no-daemon
+RUN gradle :UsageService:build -x test --no-daemon && rm /home/gradle/project/UsageService/build/libs/*-plain.jar
 
 FROM --platform=linux/amd64 eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
-COPY --from=build /home/gradle/project/UsageService/build/libs/*[!plain].jar app.jar
+COPY --from=build /home/gradle/project/UsageService/build/libs/*.jar app.jar
 
 EXPOSE 8082
 

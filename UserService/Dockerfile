@@ -45,15 +45,15 @@ COPY build.gradle settings.gradle ./
 # UserService 전체 복사
 COPY UserService ./UserService/
 
-# 빌드 실행
-RUN gradle :UserService:build -x test --no-daemon
+# 빌드 실행 및 plain.jar 삭제
+RUN gradle :UserService:build -x test --no-daemon && rm /home/gradle/project/UserService/build/libs/*-plain.jar
 
 # 2. 실행 환경
 FROM --platform=linux/amd64 eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
-# plain.jar를 제외한 실행 가능한 JAR만 복사
-COPY --from=build /home/gradle/project/UserService/build/libs/*[!plain].jar app.jar
+# 실행 가능한 JAR만 복사
+COPY --from=build /home/gradle/project/UserService/build/libs/*.jar app.jar
 
 EXPOSE 8081
 

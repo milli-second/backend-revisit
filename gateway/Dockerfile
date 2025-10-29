@@ -35,16 +35,16 @@ WORKDIR /home/gradle/project
 COPY build.gradle settings.gradle ./
 COPY gateway ./gateway/
 
-RUN gradle :gateway:build -x test --no-daemon
+RUN gradle :gateway:build -x test --no-daemon && rm /home/gradle/project/gateway/build/libs/*-plain.jar
 
 FROM --platform=linux/amd64 eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
-COPY --from=build /home/gradle/project/gateway/build/libs/*[!plain].jar app.jar
+COPY --from=build /home/gradle/project/gateway/build/libs/*.jar app.jar
 
 EXPOSE 8088
 
 ENV TZ=Asia/Seoul
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-ENTRYPOINT ["java", "-Xmx400M", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Xmx400M", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar", "--spring.profiles.active=docker"]

@@ -52,14 +52,14 @@ RUN gradle :InsightService:dependencies --no-daemon || true
 COPY InsightService ./InsightService/
 
 # :InsightService:clean 태스크는 워크스페이스가 깨끗하므로 제거
-RUN gradle :InsightService:build -x test --no-daemon
+RUN gradle :InsightService:build -x test --no-daemon && rm /home/gradle/project/InsightService/build/libs/*-plain.jar
 
 # 2. 실행 환경: 빌드된 JAR 파일을 실행합니다.
 FROM --platform=linux/amd64 eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
-# [*[!plain].jar]를 사용하여 Spring Boot 실행 가능 JAR 파일만 복사합니다.
-COPY --from=build /home/gradle/project/InsightService/build/libs/*[!plain].jar app.jar
+# 실행 가능한 JAR 파일을 복사합니다.
+COPY --from=build /home/gradle/project/InsightService/build/libs/*.jar app.jar
 
 # 컨테이너가 8083 포트를 사용한다고 외부에 알립니다.
 EXPOSE 8083
