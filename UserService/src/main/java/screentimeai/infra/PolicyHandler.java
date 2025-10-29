@@ -3,7 +3,7 @@ package screentimeai.infra;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import screentimeai.domain.*;
+import screentimeai.infra.repository.UserRepository;
 
 //<<< Clean Arch / Inbound Adaptor
 @Service

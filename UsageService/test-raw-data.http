@@ -1,0 +1,47 @@
+
+### RawData 저장 테스트 (UUID 형식, 밀리초 timestamp)-로컬
+POST https://api.yolang.shop/usage/raw-data
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ0ZXN0dXNlcjEyMyIsInV1aWQiOiI1MzQxZTI5NC01Y2JjLTU5YmQtYmY1Ni05OTUzNTM4M2JmMjIiLCJqdGkiOiJhNjc2YWUwNS00ODcxLTQ5MGQtYmU3Ny02YjZhOGI2NTMyMGUiLCJpYXQiOjE3NjE0NzgxMjcsImV4cCI6MTc2MTQ3OTkyN30.iA-muWdXa5JeNXfoMbzVTbHGzL3fQbJqUCgr0YtoFEhovFJcJ1vLiaOIJUkogGL5
+
+< ../scripts/daily_07a76922a3af962fd790fda624b7c9f1_2025/2025-10-25.json
+
+### RawData 저장 테스트 (UUID 형식, 밀리초 timestamp)-로컬
+POST http://localhost:8082/usage/raw-data
+Content-Type: application/json
+
+< ../scripts/daily_214274a5fcf0a101e0e6010c9b8db388_2025/2025-10-26.json
+
+### 특정 사용자의 RawData 저장 (가계정용)
+POST http://localhost:8082/usage/raw-data/test-account?subjectId=5341e294-5cbc-59bd-bf56-99535383bf22
+
+### 특정 사용자의 RawData 조회 (가계정용)
+GET http://localhost:8082/usage/raw-data/by-subject/5341e294-5cbc-59bd-bf56-99535383bf22
+
+
+### 특정 사용자의 RawData 조회 (테스트용)
+GET http://localhost:8088/usage/raw-data/5341e294-5cbc-59bd-bf56-99535383bf22
+
+### 특정 사용자의 RawData 조회 (가계정용)
+GET http://localhost:8088/usage/raw-data/test?subjectId=5341e294-5cbc-59bd-bf56-99535383bf22
+
+
+### TOP3 사용량 앱 조회
+GET http://localhost:8088/usage/stats/top3/5341e294-5cbc-59bd-bf56-99535383bf22
+
+### 7일치 사용 패턴 조회 (어제부터 7일치)
+GET http://localhost:8088/usage/stats/weekly/5341e294-5cbc-59bd-bf56-99535383bf22
+
+### 카테고리 비율 조회
+GET http://localhost:8088/usage/stats/category/5341e294-5cbc-59bd-bf56-99535383bf22
+
+### 3일치 시간대별 사용 통계 조회
+GET http://localhost:8088/usage/stats/3day/5341e294-5cbc-59bd-bf56-99535383bf22
+
+### Redis 데이터 확인 (redis-cli로 확인)
+# docker exec -it usageservice-redis redis-cli
+# KEYS daily_metrics:*
+# HGETALL daily_metrics:550e8400-e29b-41d4-a716-446655440000:2025-10-08
+# KEYS realtime_metrics:*
+# ZRANGE realtime_metrics:550e8400-e29b-41d4-a716-446655440000:events 0 -1 WITHSCORES
+# HGETALL realtime_metrics:550e8400-e29b-41d4-a716-446655440000:stats

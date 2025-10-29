@@ -32,3 +32,7 @@ bin/
 ### Gradle ###
 .gradle/
 build/
+/UsageService/.claude/
+
+### Docker Build Info ###
+last-build-tag.txt

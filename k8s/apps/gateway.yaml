@@ -1,0 +1,88 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway-config
+  namespace: screentimeai
+data:
+  USERSERVICE_URI: "http://userservice.screentimeai.svc.cluster.local:8080"
+  USAGESERVICE_URI: "http://usageservice.screentimeai.svc.cluster.local:8080"
+  INSIGHTSERVICE_URI: "http://insightservice.screentimeai.svc.cluster.local:8080"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+  namespace: screentimeai
+spec:
+  selector:
+    app: gateway
+  ports:
+    - port: 8088
+      targetPort: 8088
+      name: http
+      nodePort: 30088  # 로컬에서 접근용
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  namespace: screentimeai
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      containers:
+      - name: gateway
+        image: laylaoh/gateway:latest-amd64
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8088
+          name: http
+        env:
+        - name: USERSERVICE_URI
+          valueFrom:
+            configMapKeyRef:
+              name: gateway-config
+              key: USERSERVICE_URI
+        - name: USAGESERVICE_URI
+          valueFrom:
+            configMapKeyRef:
+              name: gateway-config
+              key: USAGESERVICE_URI
+        - name: INSIGHTSERVICE_URI
+          valueFrom:
+            configMapKeyRef:
+              name: gateway-config
+              key: INSIGHTSERVICE_URI
+        - name: JWT_SECRET_KEY
+          value: "my-jwt-secret-key-change-in-production-7e9f3b4c5d7c5d8e4f12a9ec17f1f4d29c6b1f8a2"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "300m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8088
+          initialDelaySeconds: 120
+          periodSeconds: 15
+          timeoutSeconds: 10
+          failureThreshold: 6
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8088
+          initialDelaySeconds: 90
+          periodSeconds: 10
+          timeoutSeconds: 10
+          failureThreshold: 10

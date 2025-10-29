@@ -1,80 +1,70 @@
 server:
   port: 8088
 
----
+jwt:
+  secret: ${JWT_SECRET_KEY:my-default-secret7e9f3b4c5d7c5d8e4f12a9ec17f1f4d29c6b1f8a2}
 
 spring:
-  config:
-    activate:
-      on-profile: default
+  application:
+    name: gateway
   cloud:
     gateway:
-#<<< API Gateway / Routes
       routes:
+        # Swagger 문서 접근 (인증 불필요)
+        - id: usageservice-docs
+          uri: ${USAGESERVICE_URI:http://localhost:8082}
+          predicates:
+            - Path=/usage/v3/api-docs/**,/usage/swagger-ui/**,/usage/swagger-ui.html
+        - id: insightservice-docs
+          uri: ${INSIGHTSERVICE_URI:http://localhost:8083}
+          predicates:
+            - Path=/insights/v3/api-docs/**,/insights/swagger-ui/**,/insights/swagger-ui.html
+
+        # 일반 API 접근 (JWT 인증 필요)
         - id: userservice
-          uri: http://localhost:8081
+          uri: ${USERSERVICE_URI:http://localhost:8081}
           predicates:
-            - Path=/users/**, 
-        - id: insightservice
-          uri: http://localhost:8082
-          predicates:
-            - Path=/insights/**, /viewInsightReports/**
+            - Path=/users/**
         - id: usageservice
-          uri: http://localhost:8083
+          uri: ${USAGESERVICE_URI:http://localhost:8082}
           predicates:
-            - Path=/screenData/**, /viewUsageReports/**
-        - id: frontend
-          uri: http://localhost:8080
+            - Path=/usage/**
+          filters:
+            - JwtAuthenticationFilter
+        - id: insightservice
+          uri: ${INSIGHTSERVICE_URI:http://localhost:8083}
           predicates:
-            - Path=/**
-#>>> API Gateway / Routes
+            - Path=/insights/**
+          filters:
+            - JwtAuthenticationFilter
+#        - id: frontend
+#          uri: ${FRONTEND_URI:http://localhost:8080}
+#          predicates:
+#            - Path=/**
+
       globalcors:
         corsConfigurations:
           '[/**]':
             allowedOriginPatterns:
+              - "http://localhost:3000"
               - "*"
             allowedMethods:
-              - "*"
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
             allowedHeaders:
               - "*"
             allowCredentials: true
 
-
----
-
-spring:
-  config:
-    activate:
-      on-profile: docker
-  cloud:
-    gateway:
-      routes:
-        - id: userservice
-          uri: http://userservice:8080
-          predicates:
-            - Path=/users/**, 
-        - id: insightservice
-          uri: http://insightservice:8080
-          predicates:
-            - Path=/insights/**, 
-        - id: usageservice
-          uri: http://usageservice:8080
-          predicates:
-            - Path=/screenData/**, 
-        - id: frontend
-          uri: http://frontend:8080
-          predicates:
-            - Path=/**
-      globalcors:
-        corsConfigurations:
-          '[/**]':
-            allowedOriginPatterns:
-              - "*"
-            allowedMethods:
-              - "*"
-            allowedHeaders:
-              - "*"
-            allowCredentials: true
-
-server:
-  port: 8080
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: User Service
+        url: /users/v3/api-docs
+      - name: Usage Service
+        url: /usage/v3/api-docs
+      - name: Insight Service
+        url: /insights/v3/api-docs

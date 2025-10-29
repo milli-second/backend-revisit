@@ -1,0 +1,92 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-ingress
+  namespace: screentimeai
+  annotations:
+    # F5 Nginx Ingress Controller annotations
+    nginx.org/redirect-to-https: "true"
+    nginx.org/client-max-body-size: "50m"  # 요청 본문 최대 크기 50MB
+    # Let's Encrypt 자동 인증서 발급 (cert-manager 사용 시)
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    # .git 디렉토리 접근 차단
+    nginx.org/server-snippets: |
+      location ~ /\.git {
+        deny all;
+        return 404;
+      }
+    # Rate limit to 10 requests per second
+    nginx.ingress.kubernetes.io/limit-rps: "10"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - api.yolang.shop
+      secretName: api-yolang-shop-tls
+  rules:
+    - host: api.yolang.shop
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway
+                port:
+                  number: 8088
+          - path: /favicon.ico
+            pathType: Exact
+            backend:
+              service:
+                name: gateway
+                port:
+                  number: 8088
+          - path: /users
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway
+                port:
+                  number: 8088
+          - path: /usage
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway
+                port:
+                  number: 8088
+          - path: /insights
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway
+                port:
+                  number: 8088
+          - path: /actuator
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway
+                port:
+                  number: 8088
+          - path: /swagger-ui
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway
+                port:
+                  number: 8088
+          - path: /v3/api-docs
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway
+                port:
+                  number: 8088
+          - path: /webjars
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway
+                port:
+                  number: 8088

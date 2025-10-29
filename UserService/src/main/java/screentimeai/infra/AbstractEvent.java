@@ -10,7 +10,6 @@ import screentimeai.UserserviceApplication;
 
 //<<< Clean Arch / Outbound Adaptor
 public class AbstractEvent {
-
     String eventType;
     Long timestamp;
 
@@ -23,29 +22,6 @@ public class AbstractEvent {
         this.setEventType(this.getClass().getSimpleName());
         this.timestamp = System.currentTimeMillis();
     }
-
-    public void publish() {
-        /**
-         * spring streams 함수형 방식
-         */
-        StreamBridge streamBridge = UserserviceApplication.applicationContext.getBean(
-            StreamBridge.class
-        );
-        
-        streamBridge.send("eventProducer-out-0", this);
-    }
-
-    public void publishAfterCommit() {
-        TransactionSynchronizationManager.registerSynchronization(
-            new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    AbstractEvent.this.publish();
-                }
-            }
-        );
-    }
-
     public String getEventType() {
         return eventType;
     }

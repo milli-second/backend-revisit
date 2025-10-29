@@ -1,88 +1,114 @@
-server:
-  port: 8083
-
 spring:
   application:
     name: usageservice
----
 
+  datasource:
+    url: jdbc:postgresql://localhost:5433/usageservice
+    driver-class-name: org.postgresql.Driver
+    username: postgres
+    password: postgres
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        show_sql: true
+        format_sql: true
+        implicit_naming_strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyComponentPathImpl
+
+  cloud:
+    stream:
+      bindings:
+        produceDailyMetricsSaved:
+          destination: daily_metrics_saved
+          contentType: application/json
+      kafka:
+        binder:
+          brokers: localhost:9092
+          configuration:
+            security.protocol: PLAINTEXT
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 1
+      password: ${SPRING_DATA_REDIS_PASSWORD:}
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+    org.hibernate.type.descriptor.sql: trace
+
+  data:
+    rest:
+      base-path: /api
+      detection-strategy: annotated
+
+springdoc:
+  api-docs:
+    path: /usage/v3/api-docs
+  swagger-ui:
+    path: /usage/swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  show-actuator: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+      base-path: /actuator
+
+---
+# 로컬 개발 환경
 spring:
   config:
     activate:
       on-profile: default
-  jpa:
-    properties:
-      hibernate:
-        show_sql: true
-        format_sql: true
-        implicit_naming_strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyComponentPathImpl
-  cloud:
-    stream:
-      kafka:
-        binder:
-          brokers: localhost:9092
-        streams:
-          binder:
-            configuration:
-              default:
-                key:
-                  serde: org.apache.kafka.common.serialization.Serdes$StringSerde
-                value:
-                  serde: org.apache.kafka.common.serialization.Serdes$StringSerde
-      bindings:
-        event-in:
-          group: usageservice
-#<<< EDA / Topic Name
-          destination: screentimeai
-#>>> EDA / Topic Name
-          contentType: application/json
-        event-out:
-#<<< EDA / Topic Name
-          destination: screentimeai
-#>>> EDA / Topic Name
-          contentType: application/json
-
-logging:
-  level:
-    org.hibernate.type: trace
-    org.springframework.cloud: debug
-
 
 server:
-  port: 8083
+  port: 8082
 
 ---
-
+# Docker/Kubernetes 환경
 spring:
   config:
     activate:
       on-profile: docker
+
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:usageservice-postgres.db.svc.cluster.local}:5432/usageservice
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+
   jpa:
+    hibernate:
+      ddl-auto: none
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         show_sql: true
         format_sql: true
         implicit_naming_strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyComponentPathImpl
+
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:redis.db.svc.cluster.local}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      database: ${SPRING_DATA_REDIS_DATABASE:1}
+      password: ${SPRING_DATA_REDIS_PASSWORD}
+
   cloud:
     stream:
       kafka:
         binder:
-          brokers: my-kafka:9092
-        streams:
-          binder:
-            configuration:
-              default:
-                key:
-                  serde: org.apache.kafka.common.serialization.Serdes$StringSerde
-                value:
-                  serde: org.apache.kafka.common.serialization.Serdes$StringSerde
-      bindings:
-        event-in:
-          group: usageservice
-          destination: screentimeai
-          contentType: application/json
-        event-out:
-          destination: screentimeai
-          contentType: application/json
+          brokers: kafka-0.kafka.db.svc.cluster.local:9092
+          configuration:
+            security.protocol: PLAINTEXT
 
-
+server:
+  port: 8080
