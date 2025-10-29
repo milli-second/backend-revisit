@@ -3,11 +3,11 @@ FROM gradle:8.5.0-jdk21-jammy AS build
 WORKDIR /home/gradle/project
 
 # 프로젝트 루트의 build.gradle과 settings.gradle을 복사
-COPY ../build.gradle ./build.gradle
-COPY ../settings.gradle ./settings.gradle
+COPY build.gradle ./build.gradle
+COPY settings.gradle ./settings.gradle
 
 # gateway 모듈 전체를 복사
-COPY . ./gateway/
+COPY gateway/ ./gateway/
 
 # clean 후 빌드 실행 (이전 빌드 아티팩트 제거)
 RUN gradle :gateway:clean :gateway:build -x test --no-daemon
