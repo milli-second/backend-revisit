@@ -13,6 +13,7 @@ import java.time.LocalDate;
 @Builder
 public class DailyUsageSummary {
     private LocalDate date;
+    private Integer totalMinutes;
     private Integer dawnMinutes;
     private Integer morningMinutes;
     private Integer afternoonMinutes;

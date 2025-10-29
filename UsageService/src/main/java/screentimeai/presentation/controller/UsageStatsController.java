@@ -169,4 +169,35 @@ public class UsageStatsController {
 
         return ResponseEntity.ok(weeklyTrend);
     }
+
+    /**
+     * 오늘 사용시간 조회 API (자정부터 현재까지)
+     */
+    @Operation(
+        summary = "오늘 사용시간 조회",
+        description = "특정 사용자의 오늘(자정부터 현재까지) 사용 통계를 Redis에서 조회합니다. " +
+                "날짜, 총 사용시간(분), 픽업 카운트를 배열 형태로 반환합니다."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "오늘 사용시간 조회 성공",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = screentimeai.presentation.dto.TodayUsageResponse.class))),
+        @ApiResponse(responseCode = "404", description = "오늘 사용 기록 없음")
+    })
+    @SecurityRequirement(name = "JWT Authentication")
+    @GetMapping("/today")
+    public ResponseEntity<List<screentimeai.presentation.dto.TodayUsageResponse>> getTodayUsage(
+            @Parameter(description = "사용자 ID (JWT에서 자동 추출)", hidden = true)
+            @RequestHeader("X-User-Id") String userId) {
+        UUID subjectId = UUID.fromString(userId);
+        log.info("Fetching today usage for subjectId: {}", subjectId);
+
+        List<screentimeai.presentation.dto.TodayUsageResponse> todayUsage = metricsAggregator.getTodayUsage(subjectId);
+
+        if (todayUsage.isEmpty() || todayUsage.get(0).getTotalUsageMinutes() == null) {
+            log.warn("No today usage found for subjectId: {}", subjectId);
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(todayUsage);
+    }
 }

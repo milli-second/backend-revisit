@@ -61,11 +61,20 @@ public class AppUsageTracker {
      * MOVE_TO_FOREGROUND: 앱이 포그라운드로 이동 (시작)
      */
     private void handleForegroundEvent(RawData rawData) {
+        long currentTimestamp = rawData.getTimestamp().toEpochMilli();
+        long nowTimestamp = Instant.now().toEpochMilli();
+
+        // 미래 데이터 필터링 (현재 시간보다 미래인 경우)
+        if (currentTimestamp > nowTimestamp) {
+            log.warn("Future data detected in FOREGROUND: timestamp={}, current={}, package={}, subjectId={}",
+                    currentTimestamp, nowTimestamp, rawData.getPackageName(), rawData.getSubjectId());
+            return;
+        }
+
         String key = buildForegroundKey(rawData.getSubjectId(), rawData.getPackageName());
 
         // 세션 병합: 5초 이내에 같은 앱이 다시 FOREGROUND로 오면 이전 세션 유지
         Long lastSessionEnd = getLastSessionEnd(rawData.getSubjectId(), rawData.getPackageName());
-        long currentTimestamp = rawData.getTimestamp().toEpochMilli();
 
         if (lastSessionEnd != null && (currentTimestamp - lastSessionEnd) <= SESSION_MERGE_THRESHOLD_MILLIS) {
             // 기존 세션이 5초 이내에 종료되었으면 새 세션으로 시작하지 않고 무시
@@ -112,6 +121,16 @@ public class AppUsageTracker {
                 : 0;
 
         long endTimestamp = rawData.getTimestamp().toEpochMilli();
+        long currentTimestamp = Instant.now().toEpochMilli();
+
+        // 미래 데이터 필터링 (현재 시간보다 미래인 경우)
+        if (endTimestamp > currentTimestamp) {
+            log.warn("Future data detected: endTimestamp={}, current={}, package={}, subjectId={}",
+                    endTimestamp, currentTimestamp, rawData.getPackageName(), rawData.getSubjectId());
+            redisTemplate.delete(key);
+            return;
+        }
+
         long usageMillis = endTimestamp - startTimestamp;
 
         // 비정상적인 사용시간 필터링 (0초 미만 or 24시간 초과)
@@ -149,8 +168,27 @@ public class AppUsageTracker {
      * USER_INTERACTION: 사용자 상호작용 (픽업 카운트 + Heartbeat)
      */
     private void handleUserInteractionEvent(RawData rawData) {
+        long eventTimestamp = rawData.getTimestamp().toEpochMilli();
+        long nowTimestamp = Instant.now().toEpochMilli();
+
+        // 미래 데이터 필터링 (현재 시간보다 미래인 경우)
+        if (eventTimestamp > nowTimestamp) {
+            log.warn("Future data detected in USER_INTERACTION: timestamp={}, current={}, subjectId={}",
+                    eventTimestamp, nowTimestamp, rawData.getSubjectId());
+            return;
+        }
+
         int utcOffset = rawData.getUtcoffset() != null ? rawData.getUtcoffset() : 0;
         LocalDate date = getLocalDate(rawData.getTimestamp(), utcOffset);
+        LocalDate today = getLocalDate(Instant.now(), utcOffset);
+
+        // 미래 날짜 데이터 필터링 (오늘보다 미래인 경우)
+        if (date.isAfter(today)) {
+            log.warn("Future date detected in USER_INTERACTION: date={}, today={}, subjectId={}",
+                    date, today, rawData.getSubjectId());
+            return;
+        }
+
         String dailyKey = buildDailyKey(rawData.getSubjectId(), date);
 
         // 픽업 카운트 증가
@@ -240,10 +278,19 @@ public class AppUsageTracker {
      */
     private void aggregateRealtimeMetrics(String realtimeKey, String packageName, String appName,
                                            Instant timestamp, int usageMinutes, int categoryId) {
+        long nowMillis = Instant.now().toEpochMilli();
+        long twentyFourHoursAgo = nowMillis - (24 * 60 * 60 * 1000L);
+        long eventMillis = timestamp.toEpochMilli();
+
         // 24시간 이전 데이터는 실시간 메트릭에 추가하지 않음 (불필요한 연산 방지)
-        long twentyFourHoursAgo = Instant.now().minusSeconds(24 * 60 * 60).toEpochMilli();
-        if (timestamp.toEpochMilli() < twentyFourHoursAgo) {
+        if (eventMillis < twentyFourHoursAgo) {
             log.debug("Skipping realtime metrics for old data: timestamp={}", timestamp);
+            return;
+        }
+
+        // 미래 데이터 필터링 (현재 시간보다 미래인 경우)
+        if (eventMillis > nowMillis) {
+            log.warn("Skipping realtime metrics for future data: timestamp={}, now={}", timestamp, Instant.now());
             return;
         }
 
@@ -511,6 +558,25 @@ public class AppUsageTracker {
                                                      Instant endTime, long usageMillis, int utcOffset) {
         LocalDate startDate = getLocalDate(startTime, utcOffset);
         LocalDate endDate = getLocalDate(endTime, utcOffset);
+        LocalDate today = getLocalDate(Instant.now(), utcOffset);
+
+        // 미래 날짜 데이터 필터링 (시작 날짜가 오늘보다 미래인 경우)
+        if (startDate.isAfter(today)) {
+            log.warn("Future date session detected: startDate={}, today={}, subjectId={}, package={}",
+                    startDate, today, rawData.getSubjectId(), rawData.getPackageName());
+            return;
+        }
+
+        // 종료 날짜가 미래라면 오늘까지만 집계
+        if (endDate.isAfter(today)) {
+            log.warn("Session ends in future: endDate={}, today={}, truncating to today, subjectId={}, package={}",
+                    endDate, today, rawData.getSubjectId(), rawData.getPackageName());
+            endDate = today;
+            // endTime을 오늘 자정 직전으로 조정
+            ZoneId zoneId = ZoneId.ofOffset("UTC", java.time.ZoneOffset.ofHours(utcOffset));
+            endTime = today.plusDays(1).atStartOfDay(zoneId).toInstant().minusMillis(1);
+            usageMillis = endTime.toEpochMilli() - startTime.toEpochMilli();
+        }
 
         // 같은 날이면 기존 로직 사용
         if (startDate.equals(endDate)) {
@@ -639,23 +705,35 @@ public class AppUsageTracker {
         }
     }
 
-    public TodayUsageSummary getTodayUsage(UUID subjectId, int utcOffset) {
+    public TodayUsageSummary getTodayUsageForThreeDay(UUID subjectId, int utcOffset) {
         LocalDate today = getLocalDate(Instant.now(), utcOffset);
         String dailyKey = buildDailyKey(subjectId, today);
         Map<Object, Object> dailyMetrics = redisTemplate.opsForHash().entries(dailyKey);
 
-        int dawnMinutes = dailyMetrics.get("dawn_minutes") != null ? Integer.parseInt(dailyMetrics.get("dawn_minutes").toString()) : 0;
-        int morningMinutes = dailyMetrics.get("morning_minutes") != null ? Integer.parseInt(dailyMetrics.get("morning_minutes").toString()) : 0;
-        int afternoonMinutes = dailyMetrics.get("afternoon_minutes") != null ? Integer.parseInt(dailyMetrics.get("afternoon_minutes").toString()) : 0;
-        int eveningMinutes = dailyMetrics.get("evening_minutes") != null ? Integer.parseInt(dailyMetrics.get("evening_minutes").toString()) : 0;
+        // Redis에서 밀리초 단위로 저장된 데이터를 읽어서 분으로 변환
+        long totalMillis = dailyMetrics.get("total_usage_millis") != null ? Long.parseLong(dailyMetrics.get("total_usage_millis").toString()) : 0L;
+        long dawnMillis = dailyMetrics.get("dawn_millis") != null ? Long.parseLong(dailyMetrics.get("dawn_millis").toString()) : 0L;
+        long morningMillis = dailyMetrics.get("morning_millis") != null ? Long.parseLong(dailyMetrics.get("morning_millis").toString()) : 0L;
+        long afternoonMillis = dailyMetrics.get("afternoon_millis") != null ? Long.parseLong(dailyMetrics.get("afternoon_millis").toString()) : 0L;
+        long eveningMillis = dailyMetrics.get("evening_millis") != null ? Long.parseLong(dailyMetrics.get("evening_millis").toString()) : 0L;
 
+        // 밀리초를 분으로 변환 (반올림)
+        int totalMinutes = (int) Math.round(totalMillis / 60000.0);
+        int dawnMinutes = (int) Math.round(dawnMillis / 60000.0);
+        int morningMinutes = (int) Math.round(morningMillis / 60000.0);
+        int afternoonMinutes = (int) Math.round(afternoonMillis / 60000.0);
+        int eveningMinutes = (int) Math.round(eveningMillis / 60000.0);
+
+        // 시간별 사용량 조회 (밀리초 -> 분 변환)
         int[] hourlyMinutes = new int[24];
         for (int hour = 0; hour < 24; hour++) {
-            Object usage = dailyMetrics.get("hour_" + hour);
-            hourlyMinutes[hour] = usage != null ? Integer.parseInt(usage.toString()) : 0;
+            Object usage = dailyMetrics.get("hour_millis_" + hour);
+            long hourMillis = usage != null ? Long.parseLong(usage.toString()) : 0L;
+            hourlyMinutes[hour] = (int) Math.round(hourMillis / 60000.0);
         }
 
-        int maxTwoHourUsage = 0;  // Changed from -1: only update when there's actual usage
+        // 가장 활발한 2시간 구간 찾기
+        int maxTwoHourUsage = 0;
         int mostActiveHourStart = -1;
 
         for (int i = 0; i < 23; i++) {
@@ -668,6 +746,7 @@ public class AppUsageTracker {
 
         DailyUsageSummary dailySummary = DailyUsageSummary.builder()
                 .date(today)
+                .totalMinutes(totalMinutes)
                 .dawnMinutes(dawnMinutes)
                 .morningMinutes(morningMinutes)
                 .afternoonMinutes(afternoonMinutes)
@@ -677,6 +756,32 @@ public class AppUsageTracker {
         return TodayUsageSummary.builder()
                 .dailySummary(dailySummary)
                 .mostActiveHourStart(mostActiveHourStart)
+                .build();
+    }
+
+    /**
+     * 오늘 사용시간 조회 (총 사용시간 + 픽업 카운트)
+     */
+    public screentimeai.presentation.dto.TodayUsageResponse getTodayUsage(UUID subjectId, int utcOffset) {
+        LocalDate today = getLocalDate(Instant.now(), utcOffset);
+        String dailyKey = buildDailyKey(subjectId, today);
+        Map<Object, Object> dailyMetrics = redisTemplate.opsForHash().entries(dailyKey);
+
+        // Redis에서 밀리초 단위로 저장된 총 사용시간 읽기
+        long totalMillis = dailyMetrics.get("total_usage_millis") != null
+                ? Long.parseLong(dailyMetrics.get("total_usage_millis").toString()) : 0L;
+
+        // 밀리초를 분으로 변환 (반올림)
+        int totalMinutes = (int) Math.round(totalMillis / 60000.0);
+
+        // 픽업 카운트 읽기
+        int pickupCount = dailyMetrics.get("daily_pickup_count") != null
+                ? Integer.parseInt(dailyMetrics.get("daily_pickup_count").toString()) : 0;
+
+        return screentimeai.presentation.dto.TodayUsageResponse.builder()
+                .date(today)
+                .totalUsageMinutes(totalMinutes)
+                .pickupCount(pickupCount)
                 .build();
     }
 }

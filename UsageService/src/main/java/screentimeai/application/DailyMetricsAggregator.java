@@ -105,6 +105,23 @@ public class DailyMetricsAggregator {
         return appUsageTracker.getTop3Apps(subjectId);
     }
 
+    /**
+     * 오늘 사용시간 조회 (Redis에서 조회)
+     * @param subjectId 사용자 ID
+     * @return 오늘의 총 사용시간 및 픽업 카운트 (배열 형태)
+     */
+    public List<TodayUsageResponse> getTodayUsage(UUID subjectId) {
+        // 사용자의 최근 raw_data에서 UTC offset 가져오기
+        RawData latestRawData = rawDataRepository.findFirstBySubjectIdOrderByTimestampDesc(subjectId);
+        int utcOffset = (latestRawData != null && latestRawData.getUtcoffset() != null)
+                ? latestRawData.getUtcoffset() : 9; // 기본값: 한국 시간 (UTC+9)
+
+        log.info("Fetching today usage for subjectId: {} with UTC offset: {}", subjectId, utcOffset);
+
+        TodayUsageResponse todayUsage = appUsageTracker.getTodayUsage(subjectId, utcOffset);
+        return List.of(todayUsage);
+    }
+
     public ThreeDayUsageResponse getThreeDayUsage(UUID subjectId) {
         // 사용자의 최근 raw_data에서 UTC offset 가져오기
         RawData latestRawData = rawDataRepository.findFirstBySubjectIdOrderByTimestampDesc(subjectId);
@@ -113,7 +130,7 @@ public class DailyMetricsAggregator {
 
         log.info("Using UTC offset {} for subjectId: {}", utcOffset, subjectId);
 
-        TodayUsageSummary todaySummary = appUsageTracker.getTodayUsage(subjectId, utcOffset);
+        TodayUsageSummary todaySummary = appUsageTracker.getTodayUsageForThreeDay(subjectId, utcOffset);
 
         // UTC offset을 고려한 오늘 날짜 계산
         java.time.ZoneId zoneId = java.time.ZoneId.ofOffset("UTC", java.time.ZoneOffset.ofHours(utcOffset));
