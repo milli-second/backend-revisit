@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   environment {
-    REGISTRY = "nexus.cicd.svc.cluster.local:5000"
+    REGISTRY = "10.111.48.187:5000"
     NEXUS_REPO_NAME = "screentimeai-repo"
     CREDS = 'nexus-credentials'
     DOCKER_HOST = 'tcp://localhost:2375'
