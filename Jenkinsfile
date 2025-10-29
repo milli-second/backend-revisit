@@ -9,8 +9,8 @@ pipeline {
     PATH = "/opt/binaries:${env.PATH}"  // ← Docker, kubectl 추가
 
     // CI/CD 테스트용 별도 네임스페이스
-    APP_NAMESPACE = "screentimeai-cicd-test"
-    DB_NAMESPACE = "db-cicd-test"
+    APP_NAMESPACE = "screentimeait"
+    DB_NAMESPACE = "db"
   }
 
   stages {
