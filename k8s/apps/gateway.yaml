@@ -20,7 +20,7 @@ spec:
     - port: 8088
       targetPort: 8088
       name: http
-      nodePort: 30088  # 로컬에서 접근용
+      nodePort: 30089  # 로컬에서 접근용
   type: NodePort
 ---
 apiVersion: apps/v1
