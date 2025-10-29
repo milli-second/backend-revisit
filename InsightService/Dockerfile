@@ -3,20 +3,20 @@ FROM gradle:8.5.0-jdk21-jammy AS build
 WORKDIR /home/gradle/project
 
 # 프로젝트 루트의 build.gradle과 settings.gradle을 복사
-COPY ../build.gradle ./build.gradle
-COPY ../settings.gradle ./settings.gradle
+COPY build.gradle ./build.gradle
+COPY settings.gradle ./settings.gradle
 
-# InsightService의 build.gradle만 먼저 복사 (캐시 최적화)
-COPY build.gradle ./InsightService/build.gradle
+# # InsightService의 build.gradle만 먼저 복사 (캐시 최적화)
+# COPY build.gradle ./InsightService/build.gradle
 
 # 종속성만 다운로드 (캐시 최적화)
 RUN gradle :InsightService:dependencies --no-daemon || true
 
 # InsightService 모듈 전체를 복사
-COPY . ./InsightService/
+COPY InsightService ./InsightService/
 
 # clean 후 빌드 실행 (이전 빌드 아티팩트 제거)
-RUN gradle :InsightService:clean :InsightService:build -x test --no-daemon
+RUN gradle :InsightService:build -x test --no-daemon
 
 # 2. 실행 환경: 빌드된 JAR 파일을 실행합니다.
 FROM --platform=linux/amd64 eclipse-temurin:21-jre-jammy
