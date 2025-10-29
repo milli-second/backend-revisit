@@ -133,6 +133,7 @@ pipeline {
       def databases = [
         'userservice-postgres',
         'usageservice-postgres',
+        'insightservice-postgres',
         'redis',
         'kafka'
       ]
@@ -173,6 +174,7 @@ pipeline {
       def services = [
         [name: 'userservice', file: 'k8s/apps/userservice.yaml'],
         [name: 'usageservice', file: 'k8s/apps/usageservice.yaml'],
+        [name: 'insightservice', file: 'k8s/apps/insightservice.yaml'],
         [name: 'gateway', file: 'k8s/apps/gateway.yaml']
       ]
 
