@@ -22,7 +22,7 @@ public class ClassificationThresholds {
      * 소셜/커뮤니케이션 집중형 임계값
      */
     public static class SocialFocused {
-        public static final double RATIO_THRESHOLD = 0.25;  // 25% 이상
+        public static final double RATIO_THRESHOLD = 0.20;  // 20% 이상 (기존 25%에서 완화)
         public static final int TIME_THRESHOLD_SECONDS = 3600;  // 1시간 이상
     }
 
@@ -30,7 +30,7 @@ public class ClassificationThresholds {
      * 게임 집중형 임계값
      */
     public static class GameFocused {
-        public static final double RATIO_THRESHOLD = 0.30;  // 30% 이상
+        public static final double RATIO_THRESHOLD = 0.25;  // 25% 이상 (기존 30%에서 완화)
         public static final int TIME_THRESHOLD_SECONDS = 7200;  // 2시간 이상 (소수 클래스 보호)
     }
 
@@ -38,7 +38,7 @@ public class ClassificationThresholds {
      * 학습 집중형 임계값
      */
     public static class LearningFocused {
-        public static final double RATIO_THRESHOLD = 0.20;  // 20% 이상
+        public static final double RATIO_THRESHOLD = 0.15;  // 15% 이상 (기존 20%에서 완화)
         public static final int TIME_THRESHOLD_SECONDS = 1800;  // 30분 이상
     }
 
@@ -46,7 +46,7 @@ public class ClassificationThresholds {
      * 엔터테인먼트 집중형 임계값
      */
     public static class EntertainmentFocused {
-        public static final double RATIO_THRESHOLD = 0.25;  // 25% 이상
+        public static final double RATIO_THRESHOLD = 0.20;  // 20% 이상 (기존 25%에서 완화)
         public static final int TIME_THRESHOLD_SECONDS = 3600;  // 1시간 이상
     }
 
