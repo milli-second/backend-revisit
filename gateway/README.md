@@ -1,6 +1,6 @@
-# Gateway
+# Gateway Service
 
-Spring Cloud Gateway 기반 API 게이트웨이
+이 서비스는 마이크로서비스를 위한 API 게이트웨이 역할을 하며, 적절한 백엔드 서비스로 요청을 라우팅하고 인증, 권한 부여 및 속도 제한과 같은 공통 기능을 처리합니다.
 
 ## 📋 역할
 

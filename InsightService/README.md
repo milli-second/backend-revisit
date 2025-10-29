@@ -1,6 +1,6 @@
-# InsightService - 사용자 분류 및 인사이트 생성
+# Insight Service
 
-Python의 AI 모델링 프로젝트에서 통계 기반 사용자 분류 로직을 Java/Spring으로 이식한 프로젝트입니다.
+이 서비스는 Python AI 모델링 프로젝트에서 개발된 통계 기반 사용자 분류 로직을 Java/Spring으로 이식한 것입니다. 주요 기능에는 사용자 데이터 분석을 통한 분류 및 관련 통찰력 제공이 포함됩니다.
 
 ## 주요 기능
 
