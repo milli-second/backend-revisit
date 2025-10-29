@@ -111,12 +111,12 @@ pipeline {
         # DB Secrets을 CI/CD 테스트 네임스페이스에 적용
         if [ -f k8s/secrets/db-secrets.yaml ]; then
           # 정확한 namespace 줄만 치환
-          sed 's/^  namespace: db\$/  namespace: ${DB_NAMESPACE}/g' k8s/secrets/db-secrets.yaml | kubectl apply -f -
+          sed 's/^  namespace: db\$/  namespace: ${DB_NAMESPACE}/g' k8s/secrets/db-sealed-secrets.yaml | kubectl apply -f -
         fi
 
         # App Secrets을 CI/CD 테스트 네임스페이스에 적용
         if [ -f k8s/secrets/app-secrets.yaml ]; then
-          sed 's/^  namespace: screentimeai\$/  namespace: ${APP_NAMESPACE}/g' k8s/secrets/app-secrets.yaml | kubectl apply -f -
+          sed 's/^  namespace: screentimeai\$/  namespace: ${APP_NAMESPACE}/g' k8s/secrets/app-sealed-secrets.yaml | kubectl apply -f -
         fi
 
         echo "✅ Secrets deployed"
