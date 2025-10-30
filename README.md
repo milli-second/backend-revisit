@@ -1,8 +1,13 @@
 # Backend Services
 
-이 프로젝트는 여러 마이크로서비스로 구성된 백엔드 시스템입니다. 각 서비스는 특정 기능을 담당하며, API Gateway를 통해 외부와 통신합니다. 주요 서비스로는 사용자 관리, 사용량 추적, 통계 기반 인사이트 제공 등이 있습니다.
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/b7ff44ef-3c05-4e05-9319-3c8af74f672d" alt="스크린샷 2025-10-30 142603" width="32%" />
+  <img src="https://github.com/user-attachments/assets/505bb205-22e8-439a-b12b-eefaf251d2f3" alt="image" width="32%" />
+  <img src="https://github.com/user-attachments/assets/99030577-fdff-4780-a9f5-e58ced258897" alt="스크린샷 2025-10-30 142652" width="32%" />
+</p>
 
 ## 📋 프로젝트 개요
+
 
 사용자의 스마트폰 사용 데이터를 수집, 분석하여 의미 있는 인사이트를 제공하는 MSA 기반 백엔드 서비스입니다.
 
