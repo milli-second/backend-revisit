@@ -2,7 +2,7 @@
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/b7ff44ef-3c05-4e05-9319-3c8af74f672d" alt="스크린샷 2025-10-30 142603" width="32%" />
-  <img src="https://github.com/user-attachments/assets/505bb205-22e8-439a-b12b-eefaf251d2f3" alt="image" width="32%" />
+  <img src="https://github.com/user-attachments/assets/15bac55e-a646-4771-9bf4-e90af7164d77" width="32%"/>
   <img src="https://github.com/user-attachments/assets/99030577-fdff-4780-a9f5-e58ced258897" alt="스크린샷 2025-10-30 142652" width="32%" />
 </p>
 
