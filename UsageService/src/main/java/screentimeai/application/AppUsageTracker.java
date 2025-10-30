@@ -35,8 +35,6 @@ public class AppUsageTracker {
 
     // Session TTL: 30분 (비정상 종료 감지용)
     private static final long SESSION_TTL_MINUTES = 30;
-    // Heartbeat 간격: 5분 (장시간 사용 시 세션 연장용)
-    private static final long HEARTBEAT_INTERVAL_MINUTES = 5;
     // 최소 사용 시간: 1초 (1초 미만은 무시)
     private static final long MIN_USAGE_MILLIS = 1000;
     // 세션 병합 임계값: 5초 (5초 이내 재시작은 동일 세션으로 간주)
@@ -59,6 +57,7 @@ public class AppUsageTracker {
 
     /**
      * MOVE_TO_FOREGROUND: 앱이 포그라운드로 이동 (시작)
+     * 새로운 세션이 시작될 때 픽업 카운트 증가
      */
     private void handleForegroundEvent(RawData rawData) {
         long currentTimestamp = rawData.getTimestamp().toEpochMilli();
@@ -96,6 +95,13 @@ public class AppUsageTracker {
         redisTemplate.opsForHash().putAll(key, foregroundInfo);
         // 30분 TTL (비정상 종료 감지용)
         redisTemplate.expire(key, SESSION_TTL_MINUTES, TimeUnit.MINUTES);
+
+        // 픽업 카운트 증가 (새로운 세션 시작)
+        int utcOffset = rawData.getUtcoffset() != null ? rawData.getUtcoffset() : 0;
+        LocalDate date = getLocalDate(rawData.getTimestamp(), utcOffset);
+        String dailyKey = buildDailyKey(rawData.getSubjectId(), date);
+        redisTemplate.opsForHash().increment(dailyKey, "daily_pickup_count", 1);
+        redisTemplate.expire(dailyKey, 48, TimeUnit.HOURS);
 
         log.debug("Foreground started: subjectId={}, package={}, timestamp={}",
                 rawData.getSubjectId(), rawData.getPackageName(), rawData.getTimestamp());
@@ -164,8 +170,9 @@ public class AppUsageTracker {
     }
 
     /**
-     * TODO: 픽업 카운트는 SCREEN_INTERACTIVE, SCREEN_NON_INTERACTIVE 로 계산해야함
-     * USER_INTERACTION: 사용자 상호작용 (픽업 카운트 + Heartbeat)
+     * USER_INTERACTION: 사용자 상호작용 이벤트 처리
+     * - Heartbeat로만 사용 (현재 foreground 앱의 세션 연장)
+     * - 픽업 카운트는 MOVE_TO_FOREGROUND (새로운 세션 시작)로 계산
      */
     private void handleUserInteractionEvent(RawData rawData) {
         long eventTimestamp = rawData.getTimestamp().toEpochMilli();
@@ -177,23 +184,6 @@ public class AppUsageTracker {
                     eventTimestamp, nowTimestamp, rawData.getSubjectId());
             return;
         }
-
-        int utcOffset = rawData.getUtcoffset() != null ? rawData.getUtcoffset() : 0;
-        LocalDate date = getLocalDate(rawData.getTimestamp(), utcOffset);
-        LocalDate today = getLocalDate(Instant.now(), utcOffset);
-
-        // 미래 날짜 데이터 필터링 (오늘보다 미래인 경우)
-        if (date.isAfter(today)) {
-            log.warn("Future date detected in USER_INTERACTION: date={}, today={}, subjectId={}",
-                    date, today, rawData.getSubjectId());
-            return;
-        }
-
-        String dailyKey = buildDailyKey(rawData.getSubjectId(), date);
-
-        // 픽업 카운트 증가
-        redisTemplate.opsForHash().increment(dailyKey, "daily_pickup_count", 1);
-        redisTemplate.expire(dailyKey, 48, TimeUnit.HOURS);
 
         // Heartbeat: 현재 foreground 앱의 세션 연장 (있다면)
         if (rawData.getPackageName() != null) {
