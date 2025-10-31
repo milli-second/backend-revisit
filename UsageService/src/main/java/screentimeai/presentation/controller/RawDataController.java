@@ -47,11 +47,10 @@ public class RawDataController {
     @SecurityRequirement(name = "JWT Authentication")
     @PostMapping("/test-account")
     public ResponseEntity<String> createRawDataTestUser(
-            @RequestBody List<RawDataRequest> rawDataRequestList,
+            @Parameter(description = "사용자 ID (JWT에서 자동 추출)", hidden = true)
             @RequestHeader("X-User-Id") String userId) {
         UUID subjectId = UUID.fromString(userId);
-        log.info("▶ [createRawData/test] API called with {} records",
-                rawDataRequestList != null ? rawDataRequestList.size() : 0);
+        log.info("▶ [createRawData/test] API called for userId={}", userId);
 
         List<RawData> newDataList = new ArrayList<>();
 
