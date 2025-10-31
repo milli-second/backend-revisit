@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,49 +44,29 @@ public class RawDataController {
         summary = "원본 사용 데이터 저장",
         description = "사용자의 앱/웹사이트 사용 기록을 수집하여 저장합니다. Redis를 통한 멱등성 처리로 중복 방지하며, 실시간 집계 및 TimescaleDB에 이력을 저장합니다."
     )
-
+    @SecurityRequirement(name = "JWT Authentication")
     @PostMapping("/test-account")
-    public ResponseEntity<String> createRawData(
-            @RequestBody(required = false) List<RawDataRequest> rawDataRequestList,
-            @RequestParam(required = false) UUID subjectId) {
-
-        log.info("▶ [createRawData/test] API called with subjectId={}, bodyPresent={}",
-                subjectId, rawDataRequestList != null && !rawDataRequestList.isEmpty());
+    public ResponseEntity<String> createRawDataTestUser(
+            @RequestBody List<RawDataRequest> rawDataRequestList,
+            @RequestHeader("X-User-Id") String userId) {
+        UUID subjectId = UUID.fromString(userId);
+        log.info("▶ [createRawData/test] API called with {} records",
+                rawDataRequestList != null ? rawDataRequestList.size() : 0);
 
         List<RawData> newDataList = new ArrayList<>();
 
         try {
-            // ✅ [1] RequestBody 존재 (일반 사용자)
-            if (rawDataRequestList != null && !rawDataRequestList.isEmpty()) {
-                log.info("📥 Received {} raw data records from RequestBody", rawDataRequestList.size());
-                newDataList = rawDataRequestList.stream()
-                        .map(RawDataRequest::toEntity)
-                        .collect(Collectors.toList());
+            Instant cutoff = Instant.now().minus(Duration.ofHours(24));
+            List<RawData> recentData = rawDataRepository.findBySubjectIdAndTimestampAfter(subjectId, cutoff);
+            log.info("📊 DB fetch complete — found {} records (cutoff={})", recentData.size(), cutoff);
+
+            if (recentData.isEmpty()) {
+                log.warn("⚠ No recent data found for subjectId={}", subjectId);
+                return ResponseEntity.badRequest().body("No recent data found for subjectId=" + subjectId);
             }
 
-            // ✅ [2] subjectId만 존재 (가계정)
-            else if (subjectId != null) {
-                log.info("🧩 No body detected. Fetching recent 24h data from DB for test account {}", subjectId);
+            newDataList.addAll(recentData);
 
-                Instant cutoff = Instant.now().minus(Duration.ofHours(24));
-                List<RawData> recentData = rawDataRepository.findBySubjectIdAndTimestampAfter(subjectId, cutoff);
-                log.info("📊 DB fetch complete — found {} records (cutoff={})", recentData.size(), cutoff);
-
-                if (recentData.isEmpty()) {
-                    log.warn("⚠ No recent data found for subjectId={}", subjectId);
-                    return ResponseEntity.badRequest().body("No recent data found for subjectId=" + subjectId);
-                }
-
-                newDataList.addAll(recentData);
-            }
-
-            // ✅ [3] body와 subjectId 모두 없음
-            else {
-                log.error("❌ Invalid request — No data provided and no subjectId");
-                return ResponseEntity.badRequest().body("No data provided or subjectId missing");
-            }
-
-            // ✅ [4] Redis 멱등성 검사
             log.info("🔍 Checking for duplicates in Redis ({} total items)...", newDataList.size());
             int duplicateCount = 0;
             List<RawData> filteredList = new ArrayList<>();
@@ -106,7 +87,6 @@ public class RawDataController {
 
             log.info("✅ Redis deduplication complete — {} new, {} duplicates skipped", filteredList.size(), duplicateCount);
 
-            // ✅ [5] Redis 집계 수행
             if (!filteredList.isEmpty()) {
                 log.info("🚀 Aggregating {} records into Redis via metricsAggregator...", filteredList.size());
                 metricsAggregator.aggregateRawDataBatch(filteredList);
@@ -115,7 +95,6 @@ public class RawDataController {
                 log.warn("⚠ No new data to aggregate (all duplicates?)");
             }
 
-            // ✅ [6] 최종 결과 반환
             String resultMsg = String.format("Processed %d records (%d duplicates skipped)",
                     filteredList.size(), duplicateCount);
             log.info("✅ Finished processing: {}", resultMsg);
