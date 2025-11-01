@@ -147,6 +147,7 @@ public class DailyMetricsAggregator {
         for (DailyUserMetrics metric : pastMetrics) {
             dailySummaries.add(DailyUsageSummary.builder()
                     .date(metric.getSummaryDate())
+                    .totalMinutes(metric.getTotalUsageMinutes())
                     .dawnMinutes(metric.getDawnMinutes())
                     .morningMinutes(metric.getMorningMinutes())
                     .afternoonMinutes(metric.getAfternoonMinutes())
