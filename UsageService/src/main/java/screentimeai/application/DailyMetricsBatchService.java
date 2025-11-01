@@ -94,7 +94,7 @@ public class DailyMetricsBatchService {
     public void saveDailyMetricsToDB() {
         log.info("Starting daily metrics batch job...");
 
-        LocalDate yesterday = LocalDate.now().minusDays(1);
+        LocalDate today = LocalDate.now();
         // Redis에서 모든 daily_metrics 키 조회
         String keyPattern = REDIS_KEY_PREFIX + "*";
         Set<String> allKeys = redisTemplate.keys(keyPattern);
