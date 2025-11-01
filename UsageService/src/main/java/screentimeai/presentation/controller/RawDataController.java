@@ -55,9 +55,19 @@ public class RawDataController {
         List<RawData> newDataList = new ArrayList<>();
 
         try {
-            Instant cutoff = Instant.now().minus(Duration.ofHours(24));
-            List<RawData> recentData = rawDataRepository.findBySubjectIdAndTimestampAfter(subjectId, cutoff);
-            log.info("📊 DB fetch complete — found {} records (cutoff={})", recentData.size(), cutoff);
+            // 테스트 계정은 오늘 자정부터 현재까지 데이터만 조회 (배치는 어제까지 처리했으므로)
+            Instant now = Instant.now();
+            // 사용자의 UTC offset 가져오기 (기본값: 9 - 한국 시간)
+            RawData latestRawData = rawDataRepository.findFirstBySubjectIdOrderByTimestampDesc(subjectId);
+            int utcOffset = (latestRawData != null && latestRawData.getUtcoffset() != null)
+                    ? latestRawData.getUtcoffset() : 9;
+
+            // 오늘 자정 계산 (사용자의 UTC offset 기준)
+            ZoneId zoneId = ZoneId.ofOffset("UTC", java.time.ZoneOffset.ofHours(utcOffset));
+            Instant todayMidnight = java.time.LocalDate.now(zoneId).atStartOfDay(zoneId).toInstant();
+
+            List<RawData> recentData = rawDataRepository.findBySubjectIdAndTimestampBetween(subjectId, todayMidnight, now);
+            log.info("📊 DB fetch complete — found {} records for today (midnight={}, now={})", recentData.size(), todayMidnight, now);
 
             if (recentData.isEmpty()) {
                 log.warn("⚠ No recent data found for subjectId={}", subjectId);
@@ -66,36 +76,15 @@ public class RawDataController {
 
             newDataList.addAll(recentData);
 
-            log.info("🔍 Checking for duplicates in Redis ({} total items)...", newDataList.size());
-            int duplicateCount = 0;
-            List<RawData> filteredList = new ArrayList<>();
+            // 테스트 계정은 시뮬레이션 목적이므로 멱등성 체크 없이 바로 처리
+            log.info("🔄 Test account: Skipping deduplication, processing all {} records", newDataList.size());
 
-            for (RawData rawData : newDataList) {
-                String key = String.format("processed:%s:%d",
-                        rawData.getSubjectId(), rawData.getTimestamp().toEpochMilli());
+            log.info("🚀 Aggregating {} records into Redis via metricsAggregator...", newDataList.size());
+            metricsAggregator.aggregateRawDataBatch(newDataList);
+            log.info("🎯 Aggregation complete!");
 
-                Boolean isNew = redisTemplate.opsForValue().setIfAbsent(key, "1", Duration.ofDays(3));
-
-                if (Boolean.TRUE.equals(isNew)) {
-                    filteredList.add(rawData);
-                } else {
-                    duplicateCount++;
-                    log.debug("↩ Duplicate skipped: {}", key);
-                }
-            }
-
-            log.info("✅ Redis deduplication complete — {} new, {} duplicates skipped", filteredList.size(), duplicateCount);
-
-            if (!filteredList.isEmpty()) {
-                log.info("🚀 Aggregating {} records into Redis via metricsAggregator...", filteredList.size());
-                metricsAggregator.aggregateRawDataBatch(filteredList);
-                log.info("🎯 Aggregation complete!");
-            } else {
-                log.warn("⚠ No new data to aggregate (all duplicates?)");
-            }
-
-            String resultMsg = String.format("Processed %d records (%d duplicates skipped)",
-                    filteredList.size(), duplicateCount);
+            String resultMsg = String.format("Processed %d records (test mode: no deduplication)",
+                    newDataList.size());
             log.info("✅ Finished processing: {}", resultMsg);
 
             return ResponseEntity.ok(resultMsg);

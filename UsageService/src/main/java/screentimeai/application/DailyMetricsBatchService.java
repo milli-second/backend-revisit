@@ -95,60 +95,85 @@ public class DailyMetricsBatchService {
         log.info("Starting daily metrics batch job...");
 
         LocalDate yesterday = LocalDate.now().minusDays(1);
-        String keyPattern = REDIS_KEY_PREFIX + "*:" + yesterday;
+        // Redis에서 모든 daily_metrics 키 조회
+        String keyPattern = REDIS_KEY_PREFIX + "*";
+        Set<String> allKeys = redisTemplate.keys(keyPattern);
 
-        // Redis에서 어제 날짜의 모든 키 조회
-        Set<String> keys = redisTemplate.keys(keyPattern);
-
-        if ( keys.isEmpty()) {
-            log.info("No metrics found for yesterday: {}", yesterday);
+        if (allKeys == null || allKeys.isEmpty()) {
+            log.info("No metrics found in Redis");
             return;
         }
 
-        int savedCount = 0;
-        for (String redisKey : keys) {
+        // 오늘 이전 날짜의 키만 필터링
+        Set<String> keysToProcess = new java.util.HashSet<>();
+        for (String key : allKeys) {
             try {
-                // Redis 키에서 subject_id 추출
+                // daily_metrics:UUID:DATE 형식에서 DATE 추출
+                String[] parts = key.split(":");
+                if (parts.length >= 3) {
+                    LocalDate keyDate = LocalDate.parse(parts[2]);
+                    if (keyDate.isBefore(today)) {
+                        keysToProcess.add(key);
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Failed to parse date from key: {}", key);
+            }
+        }
+
+        if (keysToProcess.isEmpty()) {
+            log.info("No metrics found before today ({})", today);
+            return;
+        }
+
+        log.info("Found {} keys to process (before {})", keysToProcess.size(), today);
+
+        int savedCount = 0;
+        for (String redisKey : keysToProcess) {
+            try {
+                // Redis 키에서 subject_id와 date 추출
                 UUID subjectId = extractSubjectId(redisKey);
+                String[] parts = redisKey.split(":");
+                LocalDate date = LocalDate.parse(parts[2]);
 
                 // Redis 데이터 조회
                 Map<Object, Object> redisData = redisTemplate.opsForHash().entries(redisKey);
 
                 // 1. DailyUserMetrics 저장
-                DailyUserMetrics metrics = convertToMetrics(subjectId, yesterday, redisData);
+                DailyUserMetrics metrics = convertToMetrics(subjectId, date, redisData);
                 metricsRepository.save(metrics);
 
                 // 2. DailyCategoryUsage 저장
-                List<DailyCategoryUsage> categoryUsages = extractCategoryUsages(subjectId, yesterday, redisData);
+                List<DailyCategoryUsage> categoryUsages = extractCategoryUsages(subjectId, date, redisData);
                 if (!categoryUsages.isEmpty()) {
                     categoryUsageRepository.saveAll(categoryUsages);
                 }
 
                 // 3. SNS 인사이트 계산 및 저장
                 try {
-                    snsInsightService.calculateAndSave(subjectId, yesterday);
-                    log.debug("SNS insight calculated for subject: {}, date: {}", subjectId, yesterday);
+                    snsInsightService.calculateAndSave(subjectId, date);
+                    log.debug("SNS insight calculated for subject: {}, date: {}", subjectId, date);
                 } catch (Exception e) {
-                    log.error("Failed to calculate SNS insight for subject: {}, date: {}", subjectId, yesterday, e);
+                    log.error("Failed to calculate SNS insight for subject: {}, date: {}", subjectId, date, e);
                 }
 
                 // 4. 이벤트 발행
                 DailyMetricsSaved event = new DailyMetricsSaved(metrics);
                 eventPublisher.publish("produceDailyMetricsSaved", event, "DailyMetricsSaved");
-                log.info("Published DailyMetricsSaved event for subject: {}, date: {}", subjectId, yesterday);
+                log.info("Published DailyMetricsSaved event for subject: {}, date: {}", subjectId, date);
 
 
                 redisTemplate.delete(redisKey);
 
                 savedCount++;
-                log.debug("Saved metrics for subject: {}, date: {}", subjectId, yesterday);
+                log.debug("Saved metrics for subject: {}, date: {}", subjectId, date);
 
             } catch (Exception e) {
                 log.error("Failed to process metrics for key: {}", redisKey, e);
             }
         }
 
-        log.info("Daily metrics batch job completed. Saved {} records for date: {}", savedCount, yesterday);
+        log.info("Daily metrics batch job completed. Saved {} records (all dates before {})", savedCount, today);
     }
 
     private UUID extractSubjectId(String redisKey) {
