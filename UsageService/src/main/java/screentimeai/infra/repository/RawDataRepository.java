@@ -17,4 +17,6 @@ public interface RawDataRepository extends JpaRepository<RawData, RawDataId> {
     RawData findFirstBySubjectIdOrderByTimestampDesc(UUID subjectId);
 
     List<RawData> findBySubjectIdAndTimestampAfter(UUID subjectId, Instant cutoff);
+
+    List<RawData> findBySubjectIdAndTimestampBetween(UUID subjectId, Instant startTime, Instant endTime);
 }
