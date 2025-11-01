@@ -4,29 +4,32 @@ metadata:
   name: api-ingress
   namespace: screentimeai
   annotations:
-    # F5 Nginx Ingress Controller annotations
-    nginx.org/redirect-to-https: "true"
-    nginx.org/client-max-body-size: "50m"  # 요청 본문 최대 크기 50MB
-    # Let's Encrypt 자동 인증서 발급 (cert-manager 사용 시)
+    # --- NGINX Ingress 기본 설정 ---
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/limit-rps: "10"
+    nginx.org/client-max-body-size: "50m"
+
+    # --- cert-manager 설정 ---
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    # .git 디렉토리 접근 차단
-    nginx.org/server-snippets: |
+
+    # --- 보안: .git 접근 차단 ---
+    nginx.ingress.kubernetes.io/server-snippet: |
       location ~ /\.git {
         deny all;
         return 404;
       }
-    # Rate limit to 10 requests per second
-    nginx.ingress.kubernetes.io/limit-rps: "10"
 spec:
   ingressClassName: nginx
   tls:
     - hosts:
         - api.yolang.shop
       secretName: api-yolang-shop-tls
+
   rules:
     - host: api.yolang.shop
       http:
         paths:
+          # ✅ Gateway 전체 트래픽 라우팅
           - path: /
             pathType: Prefix
             backend:
@@ -34,41 +37,16 @@ spec:
                 name: gateway
                 port:
                   number: 8088
-          - path: /favicon.ico
+
+          # ✅ Swagger UI & 관련 리소스 경로
+          - path: /swagger-ui.html
             pathType: Exact
             backend:
               service:
                 name: gateway
                 port:
                   number: 8088
-          - path: /users
-            pathType: Prefix
-            backend:
-              service:
-                name: gateway
-                port:
-                  number: 8088
-          - path: /usage
-            pathType: Prefix
-            backend:
-              service:
-                name: gateway
-                port:
-                  number: 8088
-          - path: /insights
-            pathType: Prefix
-            backend:
-              service:
-                name: gateway
-                port:
-                  number: 8088
-          - path: /actuator
-            pathType: Prefix
-            backend:
-              service:
-                name: gateway
-                port:
-                  number: 8088
+
           - path: /swagger-ui
             pathType: Prefix
             backend:
@@ -76,6 +54,7 @@ spec:
                 name: gateway
                 port:
                   number: 8088
+
           - path: /v3/api-docs
             pathType: Prefix
             backend:
@@ -83,6 +62,7 @@ spec:
                 name: gateway
                 port:
                   number: 8088
+
           - path: /webjars
             pathType: Prefix
             backend:
