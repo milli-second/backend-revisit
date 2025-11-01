@@ -22,6 +22,7 @@ import screentimeai.application.DailyMetricsBatchService;
 import java.time.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -76,8 +77,27 @@ public class RawDataController {
 
             newDataList.addAll(recentData);
 
-            // 테스트 계정은 시뮬레이션 목적이므로 멱등성 체크 없이 바로 처리
-            log.info("🔄 Test account: Skipping deduplication, processing all {} records", newDataList.size());
+            // 테스트 계정은 시뮬레이션 목적이므로 기존 오늘 데이터를 삭제하고 새로 시작
+            log.info("🔄 Test account: Clearing today's Redis data before simulation");
+
+            // 오늘 날짜의 Redis 키 삭제 (daily_metrics와 realtime_metrics)
+            java.time.LocalDate today = java.time.LocalDate.now(zoneId);
+            String dailyKey = "daily_metrics:" + subjectId + ":" + today;
+            String realtimeEventsKey = "realtime_metrics:" + subjectId + ":events";
+            String realtimeStatsKey = "realtime_metrics:" + subjectId + ":stats";
+
+            redisTemplate.delete(dailyKey);
+            redisTemplate.delete(realtimeEventsKey);
+            redisTemplate.delete(realtimeStatsKey);
+            log.info("🗑️ Deleted existing Redis keys for today: {}", dailyKey);
+
+            // 멱등성 키도 삭제 (processed:subjectId:timestamp)
+            String processedKeyPattern = "processed:" + subjectId + ":*";
+            Set<String> processedKeys = redisTemplate.keys(processedKeyPattern);
+            if (processedKeys != null && !processedKeys.isEmpty()) {
+                redisTemplate.delete(processedKeys);
+                log.info("🗑️ Deleted {} processed keys for clean simulation", processedKeys.size());
+            }
 
             log.info("🚀 Aggregating {} records into Redis via metricsAggregator...", newDataList.size());
             metricsAggregator.aggregateRawDataBatch(newDataList);
