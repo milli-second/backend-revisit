@@ -1,4 +1,11 @@
 version: '3.8'
+
+# 앱 컨테이너들이 같이 쓰는 값. docker 프로파일(application.yml)의 기본값은 K8s 주소라서
+# compose에서는 Docker 네트워크 안의 서비스 이름으로 덮어쓴다 (Spring relaxed binding).
+x-kafka-env: &kafka-env
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: my-kafka:9092             # spring.kafka.bootstrap-servers
+  SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS: my-kafka:9092   # spring.cloud.stream.kafka.binder.brokers
+
 services:
   userservice-db:
     image: postgres:16
@@ -116,8 +123,8 @@ services:
       insightservice:
         condition: service_started
     build:
-      context: ./gateway
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: gateway/Dockerfile
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - USERSERVICE_URI=http://userservice:8080
@@ -132,13 +139,13 @@ services:
       - userservice-db
       - redis
     build:
-      context: ./UserService
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: UserService/Dockerfile
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      #- REDIS_HOST=redis
-      - SPRING_DATA_REDIS_HOST=redis
-      - POSTGRES_HOST=userservice-db
+      <<: *kafka-env
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATA_REDIS_HOST: redis
+      POSTGRES_HOST: userservice-db
     ports:
       - "8081:8080"
 
@@ -147,11 +154,13 @@ services:
       - kafka
       - insightservice-db
     build:
-      context: ./InsightService
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: InsightService/Dockerfile
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - POSTGRES_HOST=insightservice-db
+      <<: *kafka-env
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://insightservice-db:5432/insightservice
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     ports:
       - "8083:8080"
 
@@ -161,12 +170,14 @@ services:
       - usageservice-db
       - redis
     build:
-      context: ./UsageService
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: UsageService/Dockerfile
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - REDIS_HOST=redis
-      - POSTGRES_HOST=usageservice-db
+      <<: *kafka-env
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PASSWORD: ""
+      POSTGRES_HOST: usageservice-db
     ports:
       - "8082:8080"
 
