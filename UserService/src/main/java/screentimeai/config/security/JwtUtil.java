@@ -21,7 +21,6 @@ public class JwtUtil {
 
     public JwtUtil(@Value("${jwt.secret}") String secret) {
         this.SECRET_KEY = Keys.hmacShaKeyFor(secret.getBytes());
-        System.out.println("✅ Loaded JWT Secret: " + secret);
     }
 
     // Access Token과 Refresh Token을 모두 생성
