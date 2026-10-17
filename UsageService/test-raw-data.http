@@ -1,8 +1,21 @@
+### 로그인 (VS Code REST Client) — 토큰이 필요한 요청 전에 먼저 실행
+# @name login
+POST http://localhost:8088/users/login
+Content-Type: application/json
+
+{
+  "nickname": "testuser2",
+  "password": "password123!!!"
+}
+
+###
+@accessToken = {{login.response.body.$.accessToken}}
+
 
 ### RawData 저장 테스트 (UUID 형식, 밀리초 timestamp)-로컬
 POST https://api.yolang.shop/usage/raw-data
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ0ZXN0dXNlcjEyMyIsInV1aWQiOiI1MzQxZTI5NC01Y2JjLTU5YmQtYmY1Ni05OTUzNTM4M2JmMjIiLCJqdGkiOiJhNjc2YWUwNS00ODcxLTQ5MGQtYmU3Ny02YjZhOGI2NTMyMGUiLCJpYXQiOjE3NjE0NzgxMjcsImV4cCI6MTc2MTQ3OTkyN30.iA-muWdXa5JeNXfoMbzVTbHGzL3fQbJqUCgr0YtoFEhovFJcJ1vLiaOIJUkogGL5
+Authorization: Bearer {{accessToken}}
 
 < ../scripts/daily_07a76922a3af962fd790fda624b7c9f1_2025/2025-10-25.json
 
