@@ -62,7 +62,10 @@ spec:
               name: gateway-config
               key: INSIGHTSERVICE_URI
         - name: JWT_SECRET_KEY
-          value: "my-jwt-secret-key-change-in-production-7e9f3b4c5d7c5d8e4f12a9ec17f1f4d29c6b1f8a2"
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret
+              key: JWT_SECRET_KEY
         resources:
           requests:
             memory: "128Mi"
