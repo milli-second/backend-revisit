@@ -30,9 +30,12 @@ kubectl get namespace
 
 ### 3단계: Secret 생성
 
+저장소에는 값 없는 예시(`secrets/*.example.yaml`)만 있다. 복사해서 값을 채운 뒤 적용한다 (`secrets/*.yaml`은 gitignore 대상).
+
 ```bash
-# DB namespace용 Secret
-kubectl apply -f secrets
+cp secrets/db-secrets.example.yaml secrets/db-secrets.yaml    # 값 채우기
+cp secrets/app-secrets.example.yaml secrets/app-secrets.yaml  # 값 채우기
+kubectl apply -f secrets/db-secrets.yaml -f secrets/app-secrets.yaml
 
 # 확인
 kubectl get secrets -n db

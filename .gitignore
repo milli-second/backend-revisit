@@ -36,3 +36,7 @@ build/
 
 ### Docker Build Info ###
 last-build-tag.txt
+
+### K8s secrets (example만 커밋) ###
+k8s/secrets/*.yaml
+!k8s/secrets/*.example.yaml
