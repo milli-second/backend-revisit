@@ -2,7 +2,7 @@ server:
   port: 8088
 
 jwt:
-  secret: ${JWT_SECRET_KEY:my-default-secret7e9f3b4c5d7c5d8e4f12a9ec17f1f4d29c6b1f8a2}
+  secret: ${JWT_SECRET_KEY}
 
 spring:
   application:
