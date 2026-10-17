@@ -133,6 +133,7 @@ services:
       - USERSERVICE_URI=http://userservice:8080
       - USAGESERVICE_URI=http://usageservice:8080
       - INSIGHTSERVICE_URI=http://insightservice:8080
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:?JWT_SECRET_KEY가 없습니다. .env.example을 .env로 복사해 값을 채우세요}   # userservice와 같은 .env 값
     ports:
       - "8088:8088"
 
@@ -149,6 +150,7 @@ services:
       SPRING_PROFILES_ACTIVE: docker
       SPRING_DATA_REDIS_HOST: redis
       POSTGRES_HOST: userservice-db
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?JWT_SECRET_KEY가 없습니다. .env.example을 .env로 복사해 값을 채우세요}   # gateway와 같은 .env 값
       SPRING_JPA_HIBERNATE_DDL_AUTO: update   # Flyway 도입 전까지 로컬 compose 한정
     ports:
       - "8081:8080"
