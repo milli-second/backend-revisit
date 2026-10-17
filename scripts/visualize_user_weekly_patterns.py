@@ -3,6 +3,7 @@
 사용자별 요일별 사용 시간 및 앱 다양성 시각화 스크립트
 """
 
+import argparse
 import json
 from datetime import datetime
 from collections import defaultdict
@@ -326,12 +327,15 @@ def visualize_users_weekly_patterns(users_dir, output_dir=None, max_users=None):
         print(f"   - 4 comparison graphs")
 
 
+def main():
+    parser = argparse.ArgumentParser(description='사용자별 요일 사용 패턴을 시각화합니다.')
+    parser.add_argument('--users-dir', default='users', help='user_*.json이 있는 디렉토리 (기본값: users)')
+    parser.add_argument('--output-dir', help='출력 디렉토리 (기본값: users-dir 옆 weekly_visualizations)')
+    parser.add_argument('--max-users', type=int, default=10, help='분석할 최대 사용자 수 (기본값: 10)')
+    args = parser.parse_args()
+
+    visualize_users_weekly_patterns(args.users_dir, output_dir=args.output_dir, max_users=args.max_users)
+
+
 if __name__ == '__main__':
-    # 사용 예시
-    users_dir = "/Users/layla/IdeaProjects/backend/scripts/users"
-
-    # 모든 사용자 분석 (또는 max_users=5 등으로 제한 가능)
-    visualize_users_weekly_patterns(users_dir, max_users=10)
-
-    # 특정 사용자만 분석하려면:
-    # visualize_users_weekly_patterns(users_dir, max_users=5)
+    main()

@@ -3,6 +3,7 @@
 특정 사용자의 데이터를 날짜별로 분리하는 스크립트
 """
 
+import argparse
 import json
 from pathlib import Path
 from datetime import datetime
@@ -71,7 +72,15 @@ def split_by_day(user_id, input_dir="users", output_dir=None):
     print(f"\n✅ Done! Files saved to: {output_path}/")
     print(f"📄 Summary saved to: {summary_file}")
 
+def main():
+    parser = argparse.ArgumentParser(description='한 사용자의 데이터를 날짜별 파일로 분리합니다.')
+    parser.add_argument('--user-id', required=True, help='사용자 ID (users/user_{ID}.json의 ID)')
+    parser.add_argument('--input-dir', default='users', help='입력 디렉토리 (기본값: users)')
+    parser.add_argument('--output-dir', help='출력 디렉토리 (기본값: daily_{user_id})')
+    args = parser.parse_args()
+
+    split_by_day(args.user_id, input_dir=args.input_dir, output_dir=args.output_dir)
+
+
 if __name__ == '__main__':
-    # 가장 데이터가 많은 사용자
-    user_id = "214274a5fcf0a101e0e6010c9b8db388"
-    split_by_day(user_id)
+    main()

@@ -4,6 +4,7 @@
 예: 2018-10-17 14:30:00 -> 2025-10-17 14:30:00
 """
 
+import argparse
 import json
 import uuid
 from datetime import datetime
@@ -106,6 +107,15 @@ def convert_all_daily_files(user_id, input_dir=None, output_dir=None):
         print(f"  {file_info['new_date']}: {file_info['record_count']:,} records")
 
 
+def main():
+    parser = argparse.ArgumentParser(description='날짜별 파일의 타임스탬프를 2025년으로 옮깁니다.')
+    parser.add_argument('--user-id', required=True, help='사용자 ID (daily_{ID} 디렉토리의 ID)')
+    parser.add_argument('--input-dir', help='입력 디렉토리 (기본값: daily_{user_id})')
+    parser.add_argument('--output-dir', help='출력 디렉토리 (기본값: daily_{user_id}_2025)')
+    args = parser.parse_args()
+
+    convert_all_daily_files(args.user_id, input_dir=args.input_dir, output_dir=args.output_dir)
+
+
 if __name__ == '__main__':
-    user_id = "214274a5fcf0a101e0e6010c9b8db388"
-    convert_all_daily_files(user_id)
+    main()

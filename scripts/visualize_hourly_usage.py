@@ -3,6 +3,7 @@
 시간대별 앱 사용량을 시각화하는 스크립트
 """
 
+import argparse
 import json
 from datetime import datetime
 from collections import defaultdict, Counter
@@ -350,7 +351,14 @@ def visualize_daily_usage(json_file_path, output_dir=None):
     print(f"   - {output_file3.name}")
 
 
+def main():
+    parser = argparse.ArgumentParser(description='하루치 JSON의 시간대별 사용량을 시각화합니다.')
+    parser.add_argument('json_file', help='날짜별 JSON 파일 (예: daily_{user_id}_2025/2025-10-26.json)')
+    parser.add_argument('--output-dir', help='출력 디렉토리 (기본값: 입력 파일 옆 visualizations)')
+    args = parser.parse_args()
+
+    visualize_daily_usage(args.json_file, output_dir=args.output_dir)
+
+
 if __name__ == '__main__':
-    # 사용 예시
-    json_file = "/Users/layla/IdeaProjects/backend/scripts/daily_07a76922a3af962fd790fda624b7c9f1_2025/2025-10-26.json"
-    visualize_daily_usage(json_file)
+    main()

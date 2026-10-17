@@ -4,7 +4,7 @@
 예: 2025-10-27 데이터를 2025-11-10으로 변환
 
 사용 예시:
-    python change_date.py --user-id 214274a5fcf0a101e0e6010c9b8db388 --from-date 2025-10-27 --to-date 2025-11-10
+    python change_date.py --user-id USER_ID --from-date 2025-10-27 --to-date 2025-11-10
 """
 
 import json
@@ -93,7 +93,7 @@ def main():
         epilog="""
 사용 예시:
   # 2025-10-27 데이터를 2025-11-10으로 변환
-  python change_date.py --user-id 214274a5fcf0a101e0e6010c9b8db388 --from-date 2025-10-27 --to-date 2025-11-10
+  python change_date.py --user-id USER_ID --from-date 2025-10-27 --to-date 2025-11-10
 
   # 커스텀 입력/출력 디렉토리 지정
   python change_date.py --user-id USER_ID --from-date 2025-10-27 --to-date 2025-11-10 --input-dir ./data --output-dir ./output

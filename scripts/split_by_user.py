@@ -3,6 +3,7 @@
 스마트폰 로그 데이터셋을 사용자별로 분리하는 스크립트
 """
 
+import argparse
 import json
 from pathlib import Path
 from collections import defaultdict
@@ -57,8 +58,14 @@ def split_by_user(input_file, output_dir):
     print(f"\n✅ Done! Files saved to: {output_path}/")
     print(f"📄 Summary saved to: {summary_file}")
 
-if __name__ == '__main__':
-    input_file = "스마트폰_로그_데이터셋.json"
-    output_dir = "users"
+def main():
+    parser = argparse.ArgumentParser(description='스마트폰 로그 데이터셋을 사용자별 파일로 분리합니다.')
+    parser.add_argument('--input-file', default='스마트폰_로그_데이터셋.json', help='원본 데이터셋 JSON (기본값: 스마트폰_로그_데이터셋.json)')
+    parser.add_argument('--output-dir', default='users', help='출력 디렉토리 (기본값: users)')
+    args = parser.parse_args()
 
-    split_by_user(input_file, output_dir)
+    split_by_user(args.input_file, args.output_dir)
+
+
+if __name__ == '__main__':
+    main()
