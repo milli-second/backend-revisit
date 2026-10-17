@@ -43,3 +43,10 @@ k8s/secrets/*.yaml
 
 ### Local secrets ###
 .env
+
+### AI Hub 원본·가공 데이터 (재배포 금지 — 로컬에만 둔다) ###
+scripts/users/
+scripts/archive/
+scripts/weekly_visualizations/
+scripts/*daily*/
+UsageService/src/main/resources/all_apps.csv
