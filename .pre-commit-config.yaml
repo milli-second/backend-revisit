@@ -1,0 +1,6 @@
+# 커밋 직전에 staged 변경에서 시크릿을 검사한다. 최초 1회: pre-commit install
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
