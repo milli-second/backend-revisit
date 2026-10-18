@@ -1,0 +1,16 @@
+# 검토를 마친 gitleaks history 탐지 위치(커밋:파일:규칙:줄). 지금 파일에는 없고 옛 커밋에만 있다.
+# 판단 근거는 이 파일을 추가한 커밋 메시지 참고.
+3da1261916a2a6fa8551b44b6f3ee00cdbdc3540:UserService/user-test.http:jwt:29
+3da1261916a2a6fa8551b44b6f3ee00cdbdc3540:UserService/user-test.http:jwt:37
+518cada749afea70affeb31a084496178ff67c67:k8s/secrets/openai-sealed-secret.yaml:generic-api-key:9
+541f52347db8c0284698e5be9bc57c1693e44227:UserService/src/main/resources/application.yml:generic-api-key:67
+8f8a753fb2b8f3066775264c1679ba650546197d:UserService/user-test.http:jwt:30
+8f8a753fb2b8f3066775264c1679ba650546197d:UserService/user-test.http:jwt:40
+8f8a753fb2b8f3066775264c1679ba650546197d:UserService/user-test.http:jwt:57
+c346379029ad29014358ed7ebbcd74dcf272103b:k8s/secrets/app-sealed-secrets.yaml:generic-api-key:18
+c346379029ad29014358ed7ebbcd74dcf272103b:k8s/secrets/app-sealed-secrets.yaml:generic-api-key:40
+c346379029ad29014358ed7ebbcd74dcf272103b:k8s/secrets/app-sealed-secrets.yaml:generic-api-key:62
+c346379029ad29014358ed7ebbcd74dcf272103b:k8s/secrets/app-sealed-secrets.yaml:generic-api-key:83
+c346379029ad29014358ed7ebbcd74dcf272103b:k8s/secrets/db-sealed-secrets.yaml:generic-api-key:18
+c346379029ad29014358ed7ebbcd74dcf272103b:k8s/secrets/db-sealed-secrets.yaml:generic-api-key:40
+c346379029ad29014358ed7ebbcd74dcf272103b:k8s/secrets/db-sealed-secrets.yaml:generic-api-key:62

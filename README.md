@@ -45,6 +45,15 @@
 └────────────────────────────────────────────────────────┘
 ```
 
+## 📂 데이터 출처
+
+UsageService의 앱 카테고리 매핑(`all_apps.csv`)과 테스트 데이터는
+AI Hub [「스마트폰 앱/웹 사용 로그 데이터셋」](https://www.aihub.or.kr/aihubdata/data/view.do?currMenu=115&topMenu=100&dataSetSn=275) 데이터를 사용했습니다.
+
+AI Hub 데이터는 재배포가 금지되어 있어 **원본과 가공 데이터는 이 저장소에 포함되어 있지 않습니다.**
+- 데이터 가공 스크립트는 서버 코드와 섞지 않도록 별도 비공개 저장소에서 관리합니다.
+- `all_apps.csv`가 없어도 UsageService는 기동하지만, 매핑 로드 실패 로그를 남기고 모든 앱을 '기타' 카테고리로 분류합니다.
+
 ## 🚀 서비스 구성
 
 ### 1. **UserService** (포트: 8080)
@@ -207,7 +216,6 @@ backend/
 │   ├── databases/
 │   ├── apps/
 │   └── README.md
-├── scripts/               # 유틸리티 스크립트
 ├── build-images.sh        # Docker 이미지 빌드 스크립트
 ├── build-docker-compose.yml
 ├── settings.gradle        # Multi-module Gradle 설정

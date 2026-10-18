@@ -1,0 +1,47 @@
+### 로그인 (VS Code REST Client) — 토큰이 필요한 요청 전에 먼저 실행
+# @name login
+POST http://localhost:8088/users/login
+Content-Type: application/json
+
+{
+  "nickname": "testuser2",
+  "password": "password123!!!"
+}
+
+###
+@accessToken = {{login.response.body.$.accessToken}}
+
+
+### 특정 사용자의 RawData 저장 (가계정용)
+POST http://localhost:8082/usage/raw-data/test-account?subjectId=00000000-0000-0000-0000-000000000000
+
+### 특정 사용자의 RawData 조회 (가계정용)
+GET http://localhost:8082/usage/raw-data/by-subject/00000000-0000-0000-0000-000000000000
+
+
+### 특정 사용자의 RawData 조회 (테스트용)
+GET http://localhost:8088/usage/raw-data/00000000-0000-0000-0000-000000000000
+
+### 특정 사용자의 RawData 조회 (가계정용)
+GET http://localhost:8088/usage/raw-data/test?subjectId=00000000-0000-0000-0000-000000000000
+
+
+### TOP3 사용량 앱 조회
+GET http://localhost:8088/usage/stats/top3/00000000-0000-0000-0000-000000000000
+
+### 7일치 사용 패턴 조회 (어제부터 7일치)
+GET http://localhost:8088/usage/stats/weekly/00000000-0000-0000-0000-000000000000
+
+### 카테고리 비율 조회
+GET http://localhost:8088/usage/stats/category/00000000-0000-0000-0000-000000000000
+
+### 3일치 시간대별 사용 통계 조회
+GET http://localhost:8088/usage/stats/3day/00000000-0000-0000-0000-000000000000
+
+### Redis 데이터 확인 (redis-cli로 확인)
+# docker exec -it usageservice-redis redis-cli
+# KEYS daily_metrics:*
+# HGETALL daily_metrics:550e8400-e29b-41d4-a716-446655440000:2025-10-08
+# KEYS realtime_metrics:*
+# ZRANGE realtime_metrics:550e8400-e29b-41d4-a716-446655440000:events 0 -1 WITHSCORES
+# HGETALL realtime_metrics:550e8400-e29b-41d4-a716-446655440000:stats
