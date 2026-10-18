@@ -1,17 +1,16 @@
 # 검토를 마친 gitleaks history 탐지 위치(커밋:파일:규칙:줄). 지금 파일에는 없고 옛 커밋에만 있다.
 # 판단 근거는 이 파일을 추가한 커밋 메시지 참고.
-1d4da4656e55fdb721fc453e6a7e0384df2d4001:UserService/user-test.http:jwt:30
-1d4da4656e55fdb721fc453e6a7e0384df2d4001:UserService/user-test.http:jwt:40
-1d4da4656e55fdb721fc453e6a7e0384df2d4001:UserService/user-test.http:jwt:57
-274fcc7db78dbd80c285d3a940185568d93e6c3e:k8s/secrets/openai-sealed-secret.yaml:generic-api-key:9
+3da1261916a2a6fa8551b44b6f3ee00cdbdc3540:UserService/user-test.http:jwt:29
+3da1261916a2a6fa8551b44b6f3ee00cdbdc3540:UserService/user-test.http:jwt:37
+518cada749afea70affeb31a084496178ff67c67:k8s/secrets/openai-sealed-secret.yaml:generic-api-key:9
 541f52347db8c0284698e5be9bc57c1693e44227:UserService/src/main/resources/application.yml:generic-api-key:67
-59afbc64c09abdaf54fe68b7ada44d1d2c294502:UserService/user-test.http:jwt:29
-59afbc64c09abdaf54fe68b7ada44d1d2c294502:UserService/user-test.http:jwt:37
-aba6842e221da16bfaecfac9a2b2be9c8f45bbc7:k8s/secrets/app-sealed-secrets.yaml:generic-api-key:18
-aba6842e221da16bfaecfac9a2b2be9c8f45bbc7:k8s/secrets/app-sealed-secrets.yaml:generic-api-key:40
-aba6842e221da16bfaecfac9a2b2be9c8f45bbc7:k8s/secrets/app-sealed-secrets.yaml:generic-api-key:62
-aba6842e221da16bfaecfac9a2b2be9c8f45bbc7:k8s/secrets/app-sealed-secrets.yaml:generic-api-key:83
-aba6842e221da16bfaecfac9a2b2be9c8f45bbc7:k8s/secrets/db-sealed-secrets.yaml:generic-api-key:18
-aba6842e221da16bfaecfac9a2b2be9c8f45bbc7:k8s/secrets/db-sealed-secrets.yaml:generic-api-key:40
-aba6842e221da16bfaecfac9a2b2be9c8f45bbc7:k8s/secrets/db-sealed-secrets.yaml:generic-api-key:62
-ef6fab534c761ea116e8459df8f6a18029778368:UsageService/test-raw-data.http:jwt:5
+8f8a753fb2b8f3066775264c1679ba650546197d:UserService/user-test.http:jwt:30
+8f8a753fb2b8f3066775264c1679ba650546197d:UserService/user-test.http:jwt:40
+8f8a753fb2b8f3066775264c1679ba650546197d:UserService/user-test.http:jwt:57
+c346379029ad29014358ed7ebbcd74dcf272103b:k8s/secrets/app-sealed-secrets.yaml:generic-api-key:18
+c346379029ad29014358ed7ebbcd74dcf272103b:k8s/secrets/app-sealed-secrets.yaml:generic-api-key:40
+c346379029ad29014358ed7ebbcd74dcf272103b:k8s/secrets/app-sealed-secrets.yaml:generic-api-key:62
+c346379029ad29014358ed7ebbcd74dcf272103b:k8s/secrets/app-sealed-secrets.yaml:generic-api-key:83
+c346379029ad29014358ed7ebbcd74dcf272103b:k8s/secrets/db-sealed-secrets.yaml:generic-api-key:18
+c346379029ad29014358ed7ebbcd74dcf272103b:k8s/secrets/db-sealed-secrets.yaml:generic-api-key:40
+c346379029ad29014358ed7ebbcd74dcf272103b:k8s/secrets/db-sealed-secrets.yaml:generic-api-key:62
