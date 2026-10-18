@@ -45,8 +45,6 @@ k8s/secrets/*.yaml
 .env
 
 ### AI Hub 원본·가공 데이터 (재배포 금지 — 로컬에만 둔다) ###
-scripts/users/
-scripts/archive/
-scripts/weekly_visualizations/
-scripts/*daily*/
+# 가공 스크립트는 별도 저장소로 분리됨. 로컬에 남은 데이터가 다시 커밋되지 않게 통째로 제외
+scripts/
 UsageService/src/main/resources/all_apps.csv
